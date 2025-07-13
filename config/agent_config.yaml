@@ -1,0 +1,224 @@
+# Local AI Agent Configuration
+# Main configuration file for the AI agent system
+
+agent:
+  name: "Local AI Assistant"
+  version: "1.0.0"
+  description: "A sophisticated local AI agent with MCP integration"
+
+# Local LLM Configuration (Ollama)
+llm:
+  provider: "ollama"
+  host: "http://localhost:11434"
+  
+  models:
+    primary: "llama3.1:8b"
+    code: "codellama:7b"
+    fallback: "mistral:7b"
+  
+  context_window: 8192
+  max_tokens: 2048
+  
+  temperature:
+    creative: 0.8    # For creative tasks
+    balanced: 0.5    # For general tasks
+    precise: 0.2     # For precise tasks like coding
+  
+  timeout: 30.0      # Request timeout in seconds
+
+# Advanced AI Integration
+advanced_ai:
+  claude_code:
+    enabled: true
+    api_key_env: "CLAUDE_CODE_API_KEY"
+    max_context_size: 100000
+    timeout: 120.0
+    
+  google_cli:
+    enabled: true
+    auth_path: "~/.config/google-cli/auth.json"
+    timeout: 60.0
+
+# MCP Server Configuration
+mcp_servers:
+  filesystem:
+    enabled: true
+    url: "ws://localhost:8001"
+    timeout: 30.0
+    retry_attempts: 3
+    tools:
+      - "read_file"
+      - "write_file"
+      - "list_directory"
+      - "search_files"
+      - "create_directory"
+      - "delete_file"
+    
+  system:
+    enabled: true
+    url: "ws://localhost:8002"
+    timeout: 45.0
+    retry_attempts: 3
+    tools:
+      - "execute_command"
+      - "get_system_info"
+      - "monitor_process"
+      - "kill_process"
+    
+  desktop:
+    enabled: true
+    url: "ws://localhost:8003"
+    timeout: 30.0
+    retry_attempts: 3
+    tools:
+      - "click"
+      - "type_text"
+      - "get_window_info"
+      - "take_screenshot"
+    
+  screenshot_context:
+    enabled: true
+    url: "ws://localhost:8004"
+    timeout: 30.0
+    retry_attempts: 3
+    tools:
+      - "capture_screenshot"
+      - "get_screen_changes"
+      - "analyze_ui_element"
+    
+  ai_bridge:
+    enabled: true
+    url: "ws://localhost:8005"
+    timeout: 180.0  # Longer timeout for AI operations
+    retry_attempts: 2
+    tools:
+      - "claude_code_execute"
+      - "google_cli_search"
+
+# Screenshot Context Configuration
+screenshot_context:
+  enabled: true
+  interval_seconds: 5
+  max_buffer_size: 20
+  compression: "webp"
+  quality: 85
+  
+  # Monitor configuration
+  regions:
+    - name: "primary_monitor"
+      x: 0
+      y: 0
+      width: 1920
+      height: 1080
+      
+  # OCR settings
+  ocr:
+    enabled: true
+    language: "eng"
+    confidence_threshold: 60
+
+# Security Configuration
+security:
+  sandbox_enabled: true
+  require_confirmation: true
+  
+  # Allowed file system paths
+  allowed_paths:
+    - "~/Documents"
+    - "~/Downloads"
+    - "~/Desktop"
+    - "~/Pictures"
+    - "~/Videos"
+    - "/tmp"
+    - "~/projects"
+  
+  # Forbidden paths (never allow access)
+  forbidden_paths:
+    - "/etc"
+    - "/sys"
+    - "/proc"
+    - "/root"
+    - "~/.ssh"
+    - "~/.gnupg"
+  
+  # Operations requiring user confirmation
+  require_confirmation_for:
+    - "file_delete"
+    - "execute_command"
+    - "system_modification"
+    - "network_request"
+    - "install_software"
+  
+  # File size limits
+  max_file_size_mb: 100
+  max_upload_size_mb: 50
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file: "~/.local/share/ai-agent/agent.log"
+  max_size_mb: 100
+  backup_count: 5
+  retention_days: 30
+  
+  # Format configuration
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # Component-specific log levels
+  components:
+    mcp_client: "DEBUG"
+    task_router: "INFO"
+    security: "INFO"
+    screenshot_context: "INFO"
+
+# Performance Configuration
+performance:
+  max_concurrent_tasks: 5
+  task_timeout: 300  # 5 minutes
+  memory_limit_mb: 1024
+  
+  # Connection pooling
+  connection_pool:
+    max_connections: 10
+    idle_timeout: 300
+    
+  # Caching
+  cache:
+    enabled: true
+    max_size_mb: 256
+    ttl_seconds: 3600
+
+# Development Settings
+development:
+  debug_mode: false
+  test_mode: false
+  mock_servers: false
+  verbose_logging: false
+  
+  # Auto-reload configuration
+  auto_reload: false
+  watch_paths:
+    - "src/"
+    - "config/"
+
+# UI Configuration
+ui:
+  cli:
+    enabled: true
+    prompt: "ai-agent> "
+    history_file: "~/.local/share/ai-agent/history"
+    max_history: 1000
+    
+  web:
+    enabled: true
+    host: "localhost"
+    port: 8080
+    auto_open_browser: false
+    
+  api:
+    enabled: true
+    host: "localhost"
+    port: 8081
+    cors_enabled: true
+    rate_limit: 100  # requests per minute

@@ -1,0 +1,67 @@
+# Local AI Agent - Python Dependencies
+# Core dependencies for Phase 1.1 implementation
+
+# Async and WebSocket support
+asyncio-mqtt==0.16.1
+websockets==12.0
+aiohttp==3.9.1
+aiofiles==23.2.0
+
+# Configuration and data handling
+PyYAML==6.0.1
+pydantic==2.5.2
+dataclasses-json==0.6.3
+
+# Testing framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Development and code quality
+black==23.12.0
+ruff==0.1.8
+mypy==1.8.0
+pre-commit==3.6.0
+
+# Logging and monitoring
+structlog==23.2.0
+rich==13.7.0
+
+# Security and validation
+cryptography==41.0.8
+python-multipart==0.0.6
+
+# MCP Protocol (Model Context Protocol)
+# Note: These may need to be updated based on actual MCP Python packages
+mcp-client==0.1.0  # Placeholder - replace with actual MCP package
+jsonrpc-base==2.2.0
+jsonrpc-websocket==3.1.5
+
+# Optional dependencies for advanced features (Phase 2+)
+# Uncomment as needed in later phases
+
+# Image processing and OCR (for screenshot analysis)
+# Pillow==10.1.0
+# pytesseract==0.3.10
+# opencv-python==4.8.1.78
+
+# Vector database for file indexing (Phase 2)
+# lancedb==0.4.0
+# sentence-transformers==2.2.2
+
+# LLM integration
+# ollama==0.1.5  # When available
+# requests==2.31.0  # For HTTP API calls
+
+# UI framework (Phase 4)
+# fastapi==0.104.1
+# uvicorn==0.24.0
+# jinja2==3.1.2
+
+# Process management (for Open Interpreter integration)
+# psutil==5.9.6
+
+# Development utilities
+ipython==8.18.1
+jupyter==1.0.0
