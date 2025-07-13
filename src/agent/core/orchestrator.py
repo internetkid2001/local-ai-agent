@@ -12,6 +12,7 @@ Session: 1.3
 import asyncio
 import logging
 from typing import Dict, List, Any, Optional, Union
+from ..ai.memory_system import MemoryType, ModelMetric
 from dataclasses import dataclass
 from enum import Enum
 import time
@@ -21,7 +22,17 @@ from ..llm.function_calling import FunctionCallHandler
 from ...mcp_client.base_client import BaseMCPClient, MCPClientConfig
 from ...mcp_client.client_manager import MCPClientManager
 from .task_router import TaskRouter, TaskCategory
+from ..workflows.workflow_engine import WorkflowEngine, WorkflowDefinition
+from ..workflows.workflow_templates import WorkflowTemplates
 from ...utils.logger import get_logger
+
+# Phase 3: Advanced AI Capabilities
+from ..ai.model_orchestrator import ModelOrchestrator as AIModelOrchestrator
+from ..ai.conversation_manager import ConversationManager
+from ..ai.reasoning_engine import ReasoningEngine
+from ..ai.planning_engine import PlanningEngine
+from ..ai.memory_system import MemorySystem
+from ..ai.adaptation_engine import AdaptationEngine
 
 logger = get_logger(__name__)
 
@@ -106,6 +117,17 @@ class AgentOrchestrator:
         self.mcp_manager = MCPClientManager()
         self.task_router = TaskRouter()
         self.function_handler = FunctionCallHandler()
+        self.workflow_engine = WorkflowEngine(self)
+        self.workflow_templates = WorkflowTemplates()
+        
+        # Phase 3: Advanced AI Components
+        self.ai_model_orchestrator: Optional[AIModelOrchestrator] = None
+        self.conversation_manager: Optional[ConversationManager] = None
+        self.reasoning_engine: Optional[ReasoningEngine] = None
+        self.planning_engine: Optional[PlanningEngine] = None
+        self.memory_system: Optional[MemorySystem] = None
+        self.adaptation_engine: Optional[AdaptationEngine] = None
+        self.ai_enabled = False
         
         # Task management
         self.task_queue: List[Task] = []
@@ -145,6 +167,9 @@ class AgentOrchestrator:
             # Register core functions with Ollama
             await self._register_core_functions()
             
+            # Initialize Phase 3 AI capabilities (optional)
+            await self._initialize_ai_capabilities()
+            
             logger.info("Agent orchestrator initialized successfully")
             return True
             
@@ -168,6 +193,9 @@ class AgentOrchestrator:
             await self.ollama_client.shutdown()
         
         await self.mcp_manager.shutdown()
+        
+        # Shutdown AI capabilities
+        await self._shutdown_ai_capabilities()
         
         logger.info("Agent orchestrator shutdown complete")
     
@@ -280,7 +308,11 @@ class AgentOrchestrator:
             task.context
         )
         
-        # Route based on category and strategy
+        # Check if AI-enhanced processing is available and beneficial
+        if self.ai_enabled and self._should_use_ai_processing(task, routing_decision):
+            return await self._handle_ai_enhanced_task(task, routing_decision)
+        
+        # Route based on category and strategy (existing logic)
         if routing_decision.category in [
             TaskCategory.FILE_OPERATIONS, 
             TaskCategory.DESKTOP_AUTOMATION, 
@@ -295,6 +327,9 @@ class AgentOrchestrator:
                 return await self._handle_hybrid_task(task, routing_decision)
             else:
                 return await self._handle_llm_query(task)
+        
+        elif routing_decision.category == TaskCategory.WORKFLOW:
+            return await self._handle_workflow_task(task, routing_decision)
         
         elif routing_decision.category == TaskCategory.HYBRID:
             return await self._handle_hybrid_task(task, routing_decision)
@@ -408,10 +443,136 @@ class AgentOrchestrator:
                 "error": str(e)
             }
     
+    async def _handle_workflow_task(self, task: Task, routing_decision = None) -> Dict[str, Any]:
+        """Handle workflow execution tasks"""
+        try:
+            # Check if this is a workflow template request
+            if "template" in task.description.lower():
+                # Extract template name and parameters from task context
+                template_id = task.context.get("template_id")
+                parameters = task.context.get("parameters", {})
+                
+                if template_id:
+                    workflow = await self.create_workflow_from_template(template_id, parameters)
+                    return {
+                        "task_type": "workflow_template",
+                        "workflow_id": workflow.id,
+                        "status": workflow.status.value,
+                        "template_used": template_id
+                    }
+            
+            # Check if this is a custom workflow definition
+            elif "workflow_definition" in task.context:
+                workflow_def = task.context["workflow_definition"]
+                workflow = self.workflow_templates.parser.parse_from_dict(workflow_def)
+                executed_workflow = await self.execute_workflow(workflow)
+                
+                return {
+                    "task_type": "custom_workflow",
+                    "workflow_id": executed_workflow.id,
+                    "status": executed_workflow.status.value,
+                    "execution_results": self._summarize_workflow_results(executed_workflow)
+                }
+            
+            # Default: Try to create a simple workflow from the task description
+            else:
+                # Use LLM to break down the task into workflow steps
+                llm_response = await self._handle_llm_query(task)
+                
+                # For now, return the LLM response with workflow metadata
+                return {
+                    "task_type": "workflow_analysis",
+                    "llm_analysis": llm_response,
+                    "suggestion": "Task analyzed for potential workflow automation",
+                    "next_steps": ["Create workflow template", "Define workflow steps"]
+                }
+                
+        except Exception as e:
+            logger.error(f"Workflow task execution failed: {e}")
+            return {
+                "task_type": "workflow",
+                "status": "workflow_failed",
+                "error": str(e)
+            }
+    
+    def _summarize_workflow_results(self, workflow: WorkflowDefinition) -> Dict[str, Any]:
+        """Summarize workflow execution results"""
+        completed_steps = [s for s in workflow.steps if s.status.value == "completed"]
+        failed_steps = [s for s in workflow.steps if s.status.value == "failed"]
+        
+        return {
+            "total_steps": len(workflow.steps),
+            "completed_steps": len(completed_steps),
+            "failed_steps": len(failed_steps),
+            "execution_time": workflow.completed_at - workflow.started_at if workflow.completed_at else None,
+            "final_status": workflow.status.value
+        }
+    
     async def _register_core_functions(self):
         """Register core functions with the function handler"""
         # This will be expanded with actual functions
         pass
+    
+    async def _initialize_ai_capabilities(self):
+        """Initialize Phase 3 AI capabilities"""
+        try:
+            logger.info("Initializing Phase 3 AI capabilities...")
+            
+            # Initialize AI Model Orchestrator
+            self.ai_model_orchestrator = AIModelOrchestrator()
+            
+            # Initialize Conversation Manager
+            self.conversation_manager = ConversationManager(
+                storage_path="./data/conversations"
+            )
+            
+            # Initialize Memory System
+            self.memory_system = MemorySystem(
+                storage_path="./data/memory"
+            )
+            
+            # Initialize Adaptation Engine
+            self.adaptation_engine = AdaptationEngine(
+                storage_path="./data/adaptation"
+            )
+            
+            # Initialize Reasoning Engine (requires model orchestrator)
+            self.reasoning_engine = ReasoningEngine(
+                model_orchestrator=self.ai_model_orchestrator
+            )
+            
+            # Initialize Planning Engine (requires model orchestrator)
+            self.planning_engine = PlanningEngine(
+                model_orchestrator=self.ai_model_orchestrator
+            )
+            
+            self.ai_enabled = True
+            logger.info("Phase 3 AI capabilities initialized successfully")
+            
+        except Exception as e:
+            logger.warning(f"Failed to initialize AI capabilities: {e}")
+            logger.info("Agent will continue with core functionality only")
+            self.ai_enabled = False
+    
+    async def _shutdown_ai_capabilities(self):
+        """Shutdown Phase 3 AI capabilities"""
+        if not self.ai_enabled:
+            return
+            
+        try:
+            if self.conversation_manager:
+                await self.conversation_manager.cleanup()
+            
+            if self.memory_system:
+                await self.memory_system.cleanup()
+            
+            if self.adaptation_engine:
+                await self.adaptation_engine.cleanup()
+            
+            logger.info("AI capabilities shutdown complete")
+            
+        except Exception as e:
+            logger.error(f"Error during AI capabilities shutdown: {e}")
     
     def get_active_tasks(self) -> List[Task]:
         """Get list of currently active tasks"""
@@ -442,3 +603,218 @@ class AgentOrchestrator:
                               parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Execute an MCP tool directly"""
         return await self.mcp_manager.execute_tool_directly(client_type, tool_name, parameters)
+    
+    # Workflow Management Methods
+    
+    async def execute_workflow(self, workflow: WorkflowDefinition) -> WorkflowDefinition:
+        """Execute a complete workflow"""
+        return await self.workflow_engine.execute_workflow(workflow)
+    
+    async def create_workflow_from_template(self, template_id: str, 
+                                          parameters: Dict[str, Any]) -> WorkflowDefinition:
+        """Create and execute workflow from template"""
+        workflow = self.workflow_templates.create_workflow_from_template(template_id, parameters)
+        return await self.execute_workflow(workflow)
+    
+    def get_workflow_templates(self) -> List[Dict[str, str]]:
+        """Get list of available workflow templates"""
+        return self.workflow_templates.get_template_list()
+    
+    def get_template_info(self, template_id: str) -> Optional[Dict[str, Any]]:
+        """Get template information and parameters"""
+        return self.workflow_templates.get_template_info(template_id)
+    
+    def get_workflow_status(self, workflow_id: str) -> Optional[Dict[str, Any]]:
+        """Get workflow execution status"""
+        return self.workflow_engine.get_workflow_status(workflow_id)
+    
+    def get_running_workflows(self) -> List[Dict[str, Any]]:
+        """Get all running workflows"""
+        return self.workflow_engine.get_running_workflows()
+    
+    async def pause_workflow(self, workflow_id: str) -> bool:
+        """Pause a running workflow"""
+        return await self.workflow_engine.pause_workflow(workflow_id)
+    
+    async def resume_workflow(self, workflow_id: str) -> bool:
+        """Resume a paused workflow"""
+        return await self.workflow_engine.resume_workflow(workflow_id)
+    
+    async def cancel_workflow(self, workflow_id: str) -> bool:
+        """Cancel a running workflow"""
+        return await self.workflow_engine.cancel_workflow(workflow_id)
+    
+    # Phase 3: AI-Enhanced Task Processing
+    
+    def _should_use_ai_processing(self, task: Task, routing_decision) -> bool:
+        """Determine if task should use AI-enhanced processing"""
+        if not self.ai_enabled:
+            return False
+        
+        # Use AI for complex reasoning, planning, or analysis tasks
+        ai_keywords = [
+            'analyze', 'plan', 'reason', 'think', 'strategy', 'approach',
+            'solution', 'complex', 'multi-step', 'workflow', 'breakdown'
+        ]
+        
+        task_text = task.description.lower()
+        return any(keyword in task_text for keyword in ai_keywords)
+    
+    async def _handle_ai_enhanced_task(self, task: Task, routing_decision) -> Dict[str, Any]:
+        """Handle tasks using AI-enhanced processing"""
+        try:
+            # Store task in memory
+            if self.memory_system:
+                await self.memory_system.store_memory(
+                    content=f"Task: {task.description}",
+                    memory_type=MemoryType.EPISODIC,
+                    metadata={"task_id": task.id, "task_type": task.task_type}
+                )
+            
+            # Use reasoning engine for complex analysis
+            reasoning_result = None
+            if self.reasoning_engine and self._requires_reasoning(task):
+                reasoning_result = await self.reasoning_engine.reason(
+                    query=task.description,
+                    context=task.context
+                )
+            
+            # Use planning engine for multi-step tasks
+            plan_result = None
+            if self.planning_engine and self._requires_planning(task):
+                plan_result = await self.planning_engine.create_plan(
+                    goal=task.description,
+                    context=task.context
+                )
+            
+            # Execute the core task logic
+            core_result = await self._execute_core_task_logic(task, routing_decision)
+            
+            # Record performance metrics
+            if self.adaptation_engine:
+                await self.adaptation_engine.record_performance(
+                    metric_type=ModelMetric.CONTEXT_RELEVANCE,
+                    value=0.85,  # Would be calculated based on actual performance
+                    task_type=task.task_type
+                )
+            
+            # Combine results
+            ai_enhanced_result = {
+                "task_type": "ai_enhanced",
+                "core_result": core_result,
+                "ai_processing": {
+                    "reasoning_used": reasoning_result is not None,
+                    "planning_used": plan_result is not None,
+                    "memory_stored": self.memory_system is not None
+                }
+            }
+            
+            if reasoning_result:
+                ai_enhanced_result["reasoning_analysis"] = reasoning_result
+            
+            if plan_result:
+                ai_enhanced_result["execution_plan"] = plan_result
+            
+            return ai_enhanced_result
+            
+        except Exception as e:
+            logger.error(f"AI-enhanced task processing failed: {e}")
+            # Fallback to standard processing
+            return await self._execute_core_task_logic(task, routing_decision)
+    
+    def _requires_reasoning(self, task: Task) -> bool:
+        """Check if task requires reasoning analysis"""
+        reasoning_keywords = ['analyze', 'compare', 'evaluate', 'reason', 'logic']
+        return any(keyword in task.description.lower() for keyword in reasoning_keywords)
+    
+    def _requires_planning(self, task: Task) -> bool:
+        """Check if task requires planning"""
+        planning_keywords = ['plan', 'strategy', 'approach', 'steps', 'workflow', 'process']
+        return any(keyword in task.description.lower() for keyword in planning_keywords)
+    
+    async def _execute_core_task_logic(self, task: Task, routing_decision) -> Dict[str, Any]:
+        """Execute core task logic (existing routing logic)"""
+        if routing_decision.category in [
+            TaskCategory.FILE_OPERATIONS, 
+            TaskCategory.DESKTOP_AUTOMATION, 
+            TaskCategory.SYSTEM_MONITORING,
+            TaskCategory.SYSTEM_INTERACTION
+        ]:
+            return await self._handle_mcp_task(task, routing_decision)
+        elif routing_decision.category == TaskCategory.CODE_GENERATION:
+            if routing_decision.strategy.value == "hybrid_llm_mcp":
+                return await self._handle_hybrid_task(task, routing_decision)
+            else:
+                return await self._handle_llm_query(task)
+        elif routing_decision.category == TaskCategory.WORKFLOW:
+            return await self._handle_workflow_task(task, routing_decision)
+        elif routing_decision.category == TaskCategory.HYBRID:
+            return await self._handle_hybrid_task(task, routing_decision)
+        else:
+            return await self._handle_llm_query(task)
+    
+    # AI Capability Access Methods
+    
+    async def query_memory(self, query: str, memory_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Query the memory system"""
+        if not self.memory_system:
+            return []
+        
+        try:
+            if memory_type:
+                from ..ai.memory_system import MemoryType
+                mem_type = MemoryType(memory_type)
+                results = await self.memory_system.get_recent_memories(memory_type=mem_type)
+            else:
+                results = await self.memory_system.search_by_content(query)
+            
+            return [{
+                "id": mem.id,
+                "content": mem.content,
+                "type": mem.memory_type.value,
+                "created_at": mem.created_at.isoformat() if mem.created_at else None
+            } for mem in results]
+            
+        except Exception as e:
+            logger.error(f"Memory query failed: {e}")
+            return []
+    
+    async def get_ai_capabilities_status(self) -> Dict[str, Any]:
+        """Get status of AI capabilities"""
+        if not self.ai_enabled:
+            return {"ai_enabled": False, "reason": "AI capabilities not initialized"}
+        
+        status = {"ai_enabled": True, "components": {}}
+        
+        try:
+            if self.memory_system:
+                memory_stats = await self.memory_system.get_memory_stats()
+                status["components"]["memory_system"] = memory_stats
+            
+            if self.adaptation_engine:
+                adaptation_stats = await self.adaptation_engine.get_adaptation_stats()
+                status["components"]["adaptation_engine"] = adaptation_stats
+            
+            if self.ai_model_orchestrator:
+                models = await self.ai_model_orchestrator.list_available_models()
+                status["components"]["model_orchestrator"] = {
+                    "available_models": len(models)
+                }
+            
+            status["components"]["reasoning_engine"] = {
+                "available": self.reasoning_engine is not None
+            }
+            
+            status["components"]["planning_engine"] = {
+                "available": self.planning_engine is not None
+            }
+            
+            status["components"]["conversation_manager"] = {
+                "available": self.conversation_manager is not None
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting AI status: {e}")
+            status["error"] = str(e)
+        
+        return status

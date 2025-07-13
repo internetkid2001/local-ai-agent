@@ -30,6 +30,7 @@ class TaskCategory(Enum):
     DESKTOP_AUTOMATION = "desktop_automation"
     SYSTEM_MONITORING = "system_monitoring"
     RESEARCH = "research"
+    WORKFLOW = "workflow"
     HYBRID = "hybrid"
     GENERAL = "general"
 
@@ -99,6 +100,11 @@ class TaskClassifier:
             'research', 'find', 'search', 'lookup', 'investigate', 'explore',
             'information', 'facts', 'learn', 'understand', 'explain'
         }
+        
+        self.workflow_keywords = {
+            'workflow', 'pipeline', 'sequence', 'steps', 'automation', 'orchestrate',
+            'multi-step', 'batch', 'bulk', 'series', 'chain', 'template'
+        }
     
     def classify_task(self, description: str, context: Dict[str, Any] = None) -> TaskCategory:
         """
@@ -122,6 +128,7 @@ class TaskClassifier:
         desktop_score = self._calculate_keyword_score(text, self.desktop_keywords)
         monitoring_score = self._calculate_keyword_score(text, self.monitoring_keywords)
         research_score = self._calculate_keyword_score(text, self.research_keywords)
+        workflow_score = self._calculate_keyword_score(text, self.workflow_keywords)
         
         # Determine category based on highest score
         scores = {
@@ -131,7 +138,8 @@ class TaskClassifier:
             TaskCategory.SYSTEM_INTERACTION: system_score,
             TaskCategory.DESKTOP_AUTOMATION: desktop_score,
             TaskCategory.SYSTEM_MONITORING: monitoring_score,
-            TaskCategory.RESEARCH: research_score
+            TaskCategory.RESEARCH: research_score,
+            TaskCategory.WORKFLOW: workflow_score
         }
         
         max_score = max(scores.values())
@@ -206,6 +214,10 @@ class TaskClassifier:
             # Research is typically LLM-based
             return ExecutionStrategy.LOCAL_LLM_ONLY
         
+        elif category == TaskCategory.WORKFLOW:
+            # Workflow tasks use multi-step orchestration
+            return ExecutionStrategy.MULTI_STEP
+        
         elif category == TaskCategory.HYBRID:
             # Complex multi-step tasks
             return ExecutionStrategy.MULTI_STEP
@@ -256,6 +268,9 @@ class TaskRouter:
                 'get_network_stats', 'ping_host', 'check_port', 'parse_log_file'
             ],
             TaskCategory.RESEARCH: [],  # Primarily LLM-based
+            TaskCategory.WORKFLOW: [   # Workflow orchestration tools
+                'create_workflow', 'execute_workflow', 'workflow_template', 'workflow_status'
+            ],
             TaskCategory.HYBRID: [],   # Determined dynamically
             TaskCategory.GENERAL: []   # Determined dynamically
         }
@@ -335,6 +350,7 @@ class TaskRouter:
             TaskCategory.DESKTOP_AUTOMATION: 2,
             TaskCategory.SYSTEM_MONITORING: 2,
             TaskCategory.RESEARCH: 2,
+            TaskCategory.WORKFLOW: 4,
             TaskCategory.HYBRID: 4,
             TaskCategory.GENERAL: 2
         }
@@ -416,7 +432,8 @@ class TaskRouter:
             TaskCategory.SYSTEM_INTERACTION: ['system', 'process', 'configuration'],
             TaskCategory.DESKTOP_AUTOMATION: ['window', 'click', 'screenshot', 'desktop'],
             TaskCategory.SYSTEM_MONITORING: ['monitor', 'cpu', 'memory', 'performance'],
-            TaskCategory.RESEARCH: ['research', 'find', 'search', 'explain']
+            TaskCategory.RESEARCH: ['research', 'find', 'search', 'explain'],
+            TaskCategory.WORKFLOW: ['workflow', 'pipeline', 'steps', 'automation']
         }
         
         if category in category_keywords:
