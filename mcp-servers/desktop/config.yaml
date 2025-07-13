@@ -1,0 +1,100 @@
+# Desktop Automation MCP Server Configuration
+
+server:
+  host: "localhost"
+  port: 8766
+  name: "desktop-automation"
+  
+# Security settings
+security:
+  # Require user confirmation for potentially dangerous operations
+  require_confirmation: true
+  
+  # Applications that are allowed to be automated
+  allowed_applications: []
+  
+  # Applications that are blocked from automation
+  blocked_applications:
+    - "sudo"
+    - "su"
+    - "rm"
+    - "del"
+    - "format"
+    - "fdisk"
+    - "passwd"
+    - "keychain"
+    - "keyring"
+    - "1password"
+    - "bitwarden"
+    - "lastpass"
+  
+  # Maximum screenshot resolution
+  max_screenshot_size: "1920x1080"
+  
+  # Enable/disable clipboard monitoring
+  allow_clipboard_monitoring: true
+  
+  # Enable/disable window management
+  allow_window_management: true
+
+# Automation settings
+automation:
+  # Default delay between clicks (seconds)
+  click_delay: 0.1
+  
+  # Default delay between keystrokes (seconds)
+  type_delay: 0.05
+  
+  # Screenshot quality (1-100)
+  screenshot_quality: 80
+  
+  # Timeout for element finding (seconds)
+  element_timeout: 10.0
+  
+  # Maximum clipboard history items
+  clipboard_history_limit: 50
+  
+  # Cleanup old screenshots after (hours)
+  screenshot_cleanup_hours: 24
+
+# Platform-specific settings
+platform:
+  linux:
+    # Preferred tools (in order of preference)
+    window_tools: ["wmctrl", "xdotool", "xwininfo"]
+    input_tools: ["xdotool", "xte"]
+    clipboard_tools: ["xclip", "xsel", "wl-copy"]
+    screenshot_tools: ["gnome-screenshot", "scrot", "import"]
+    
+  macos:
+    window_tools: ["osascript"]
+    input_tools: ["osascript", "cliclick"]
+    clipboard_tools: ["pbcopy", "pbpaste"]
+    screenshot_tools: ["screencapture"]
+    
+  windows:
+    window_tools: ["powershell"]
+    input_tools: ["powershell", "nircmd"]
+    clipboard_tools: ["powershell", "clip"]
+    screenshot_tools: ["powershell", "snippingtool"]
+
+# Logging configuration
+logging:
+  level: "INFO"
+  file: "desktop_mcp.log"
+  max_size_mb: 10
+  backup_count: 3
+  
+# Performance settings
+performance:
+  # Maximum concurrent operations
+  max_concurrent_ops: 5
+  
+  # Operation timeout (seconds)
+  operation_timeout: 30.0
+  
+  # Enable caching for repeated operations
+  enable_caching: true
+  
+  # Cache timeout (seconds)
+  cache_timeout: 300
