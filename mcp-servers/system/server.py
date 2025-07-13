@@ -112,6 +112,14 @@ class SystemMCPServer:
         
         logger.info("System MCP server initialized")
     
+    def _check_permission(self, operation: OperationType, context: Dict[str, Any] = None) -> bool:
+        """Check if operation is permitted by security manager"""
+        try:
+            return self.permission_manager.check_permission(operation, context or {})
+        except Exception as e:
+            logger.error(f"Permission check failed: {e}")
+            return False
+    
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """Load server configuration"""
         default_config = {
@@ -461,6 +469,12 @@ class SystemMCPServer:
     # Tool implementations
     async def _list_processes(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """List all running processes"""
+        if not self._check_permission(OperationType.PROCESS_LIST):
+            return {
+                "success": False,
+                "error": "Permission denied: process listing not allowed"
+            }
+        
         sort_by = args.get("sort_by", "cpu_percent")
         limit = args.get("limit", 50)
         filter_pattern = args.get("filter")
@@ -521,6 +535,14 @@ class SystemMCPServer:
     
     async def _parse_logs(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Parse log files"""
+        context = {"log_path": args.get("log_path")}
+        
+        if not self._check_permission(OperationType.LOG_ACCESS, context):
+            return {
+                "success": False,
+                "error": "Permission denied: log access not allowed"
+            }
+        
         log_path = args.get("log_path")
         pattern = args.get("pattern")
         lines = args.get("lines", 100)
@@ -547,10 +569,29 @@ class SystemMCPServer:
     
     async def _ping_host(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Ping a host"""
+        context = {"host": args.get("host")}
+        
+        if not self._check_permission(OperationType.NETWORK_ACCESS, context):
+            return {
+                "success": False,
+                "error": "Permission denied: network access not allowed"
+            }
+        
         return await self.network_monitor.ping_host(args)
     
     async def _check_port(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Check if a port is open"""
+        context = {
+            "host": args.get("host", "localhost"),
+            "port": args.get("port")
+        }
+        
+        if not self._check_permission(OperationType.NETWORK_ACCESS, context):
+            return {
+                "success": False,
+                "error": "Permission denied: network access not allowed"
+            }
+        
         return await self.network_monitor.check_port(args)
     
     async def _get_connections(self, args: Dict[str, Any]) -> Dict[str, Any]:

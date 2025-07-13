@@ -1,0 +1,220 @@
+# System Monitoring MCP Server Configuration
+
+server:
+  host: "localhost"
+  port: 8767
+  name: "system-monitoring"
+
+# Security settings
+security:
+  # Allow process termination (with restrictions)
+  allow_process_kill: false
+  
+  # Allowed signals for process termination
+  allowed_signals:
+    - "TERM"
+    - "HUP"
+  
+  # Processes that cannot be terminated
+  blocked_processes:
+    - "init"
+    - "kernel"
+    - "systemd"
+    - "kthreadd"
+    - "ksoftirqd"
+    - "rcu_"
+    - "watchdog"
+  
+  # Require confirmation for dangerous operations
+  require_confirmation: true
+
+# Monitoring configuration
+monitoring:
+  # Update interval for continuous monitoring (seconds)
+  update_interval: 5.0
+  
+  # Maximum number of historical data points to keep
+  history_limit: 100
+  
+  # Alert thresholds
+  alert_thresholds:
+    cpu_percent: 90
+    memory_percent: 85
+    disk_percent: 90
+    load_average_1min: 10.0
+    
+  # Enable automatic alerting
+  enable_alerts: false
+
+# Process monitoring settings
+process:
+  # Track child processes
+  track_children: true
+  
+  # Include thread information
+  include_threads: false
+  
+  # Default sorting for process lists
+  sort_by: "cpu_percent"  # options: pid, name, cpu_percent, memory_percent
+  
+  # Maximum processes to return by default
+  default_limit: 50
+
+# Resource monitoring settings
+resource:
+  # Collection interval for metrics (seconds)
+  collect_interval: 1.0
+  
+  # Smooth values over time
+  smooth_values: true
+  
+  # Include per-CPU core statistics
+  include_per_cpu: false
+  
+  # Memory monitoring
+  memory:
+    include_swap: true
+    track_per_process: true
+  
+  # Disk monitoring
+  disk:
+    track_io_stats: true
+    exclude_filesystems:
+      - "tmpfs"
+      - "devtmpfs"
+      - "sysfs"
+      - "proc"
+
+# Logging configuration
+logging:
+  # Default log file paths to monitor
+  log_paths:
+    - "/var/log/syslog"
+    - "/var/log/messages"
+    - "/var/log/auth.log"
+    - "/var/log/kern.log"
+    - "/var/log/daemon.log"
+    - "/var/log/user.log"
+  
+  # Maximum lines to read from log files
+  max_lines: 1000
+  
+  # Enable real-time log following
+  follow_logs: true
+  
+  # Log analysis patterns
+  patterns:
+    error_keywords:
+      - "error"
+      - "fail"
+      - "exception"
+      - "critical"
+      - "fatal"
+      - "panic"
+      - "segfault"
+    
+    warning_keywords:
+      - "warn"
+      - "warning"
+      - "deprecated"
+      - "timeout"
+
+# Network monitoring settings
+network:
+  # Filter specific interfaces (empty = all interfaces)
+  interface_filter: []
+  
+  # Include loopback interfaces
+  include_loopback: false
+  
+  # DNS servers for connectivity testing
+  dns_servers:
+    - "8.8.8.8"
+    - "1.1.1.1"
+    - "1.0.0.1"
+  
+  # Network monitoring options
+  track_bandwidth: true
+  connection_timeout: 5.0
+  ping_timeout: 10.0
+
+# Performance settings
+performance:
+  # Maximum concurrent monitoring operations
+  max_concurrent_ops: 10
+  
+  # Operation timeout (seconds)
+  operation_timeout: 30.0
+  
+  # Enable performance metrics collection
+  collect_metrics: true
+  
+  # Metrics retention period (hours)
+  metrics_retention_hours: 24
+
+# Health check configuration
+health_check:
+  # Components to check
+  check_components:
+    - "cpu"
+    - "memory"
+    - "disk"
+    - "network"
+    - "processes"
+  
+  # Health check thresholds
+  thresholds:
+    cpu_critical: 95
+    cpu_warning: 80
+    memory_critical: 95
+    memory_warning: 85
+    disk_critical: 95
+    disk_warning: 90
+    load_average_critical: 20.0
+    load_average_warning: 10.0
+  
+  # Automatic health checks
+  enable_auto_checks: false
+  auto_check_interval: 300  # seconds
+
+# Platform-specific settings
+platform:
+  linux:
+    # Tools for system monitoring
+    tools:
+      process: ["ps", "top", "htop"]
+      network: ["ss", "netstat", "ip"]
+      system: ["systemctl", "service"]
+    
+    # System paths
+    proc_path: "/proc"
+    sys_path: "/sys"
+    
+  macos:
+    tools:
+      process: ["ps", "top", "activity_monitor"]
+      network: ["netstat", "lsof"]
+      system: ["launchctl"]
+  
+  windows:
+    tools:
+      process: ["tasklist", "wmic"]
+      network: ["netstat", "netsh"]
+      system: ["sc", "get-service"]
+
+# Data export configuration
+export:
+  # Enable data export
+  enable_export: false
+  
+  # Export formats
+  formats:
+    - "json"
+    - "csv"
+    - "prometheus"
+  
+  # Export directory
+  export_dir: "/tmp/system_monitoring"
+  
+  # Automatic export interval (seconds)
+  auto_export_interval: 3600

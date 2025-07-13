@@ -27,6 +27,8 @@ class TaskCategory(Enum):
     CODE_GENERATION = "code_generation"
     DATA_ANALYSIS = "data_analysis"
     SYSTEM_INTERACTION = "system_interaction"
+    DESKTOP_AUTOMATION = "desktop_automation"
+    SYSTEM_MONITORING = "system_monitoring"
     RESEARCH = "research"
     HYBRID = "hybrid"
     GENERAL = "general"
@@ -78,7 +80,19 @@ class TaskClassifier:
         
         self.system_keywords = {
             'system', 'process', 'service', 'configuration', 'settings',
-            'install', 'setup', 'monitor', 'status', 'performance'
+            'install', 'setup', 'status', 'performance'
+        }
+        
+        self.desktop_keywords = {
+            'window', 'desktop', 'click', 'mouse', 'keyboard', 'screenshot',
+            'clipboard', 'focus', 'ui', 'automation', 'gui', 'interface',
+            'type', 'press', 'key', 'button', 'screen'
+        }
+        
+        self.monitoring_keywords = {
+            'monitor', 'monitoring', 'cpu', 'memory', 'disk', 'network',
+            'resource', 'usage', 'stats', 'statistics', 'performance',
+            'log', 'logs', 'ping', 'connectivity', 'health'
         }
         
         self.research_keywords = {
@@ -105,6 +119,8 @@ class TaskClassifier:
         code_score = self._calculate_keyword_score(text, self.code_keywords)
         analysis_score = self._calculate_keyword_score(text, self.analysis_keywords)
         system_score = self._calculate_keyword_score(text, self.system_keywords)
+        desktop_score = self._calculate_keyword_score(text, self.desktop_keywords)
+        monitoring_score = self._calculate_keyword_score(text, self.monitoring_keywords)
         research_score = self._calculate_keyword_score(text, self.research_keywords)
         
         # Determine category based on highest score
@@ -113,6 +129,8 @@ class TaskClassifier:
             TaskCategory.CODE_GENERATION: code_score,
             TaskCategory.DATA_ANALYSIS: analysis_score,
             TaskCategory.SYSTEM_INTERACTION: system_score,
+            TaskCategory.DESKTOP_AUTOMATION: desktop_score,
+            TaskCategory.SYSTEM_MONITORING: monitoring_score,
             TaskCategory.RESEARCH: research_score
         }
         
@@ -176,6 +194,14 @@ class TaskClassifier:
             # System tasks usually need MCP servers
             return ExecutionStrategy.MCP_ONLY
         
+        elif category == TaskCategory.DESKTOP_AUTOMATION:
+            # Desktop automation uses dedicated MCP server
+            return ExecutionStrategy.MCP_ONLY
+        
+        elif category == TaskCategory.SYSTEM_MONITORING:
+            # System monitoring uses dedicated MCP server
+            return ExecutionStrategy.MCP_ONLY
+        
         elif category == TaskCategory.RESEARCH:
             # Research is typically LLM-based
             return ExecutionStrategy.LOCAL_LLM_ONLY
@@ -219,7 +245,15 @@ class TaskRouter:
                 'read_file', 'search_files', 'get_file_info'
             ],
             TaskCategory.SYSTEM_INTERACTION: [
-                'list_directory', 'get_file_info'  # Will expand with system MCP servers
+                'list_directory', 'get_file_info'
+            ],
+            TaskCategory.DESKTOP_AUTOMATION: [
+                'list_windows', 'focus_window', 'click_coordinates', 'type_text',
+                'take_screenshot', 'get_clipboard', 'set_clipboard', 'press_key'
+            ],
+            TaskCategory.SYSTEM_MONITORING: [
+                'list_processes', 'get_cpu_stats', 'get_memory_stats', 'get_disk_stats',
+                'get_network_stats', 'ping_host', 'check_port', 'parse_log_file'
             ],
             TaskCategory.RESEARCH: [],  # Primarily LLM-based
             TaskCategory.HYBRID: [],   # Determined dynamically
@@ -298,6 +332,8 @@ class TaskRouter:
             TaskCategory.CODE_GENERATION: 3,
             TaskCategory.DATA_ANALYSIS: 3,
             TaskCategory.SYSTEM_INTERACTION: 3,
+            TaskCategory.DESKTOP_AUTOMATION: 2,
+            TaskCategory.SYSTEM_MONITORING: 2,
             TaskCategory.RESEARCH: 2,
             TaskCategory.HYBRID: 4,
             TaskCategory.GENERAL: 2
@@ -378,6 +414,8 @@ class TaskRouter:
             TaskCategory.CODE_GENERATION: ['code', 'program', 'script', 'function'],
             TaskCategory.DATA_ANALYSIS: ['analyze', 'data', 'report'],
             TaskCategory.SYSTEM_INTERACTION: ['system', 'process', 'configuration'],
+            TaskCategory.DESKTOP_AUTOMATION: ['window', 'click', 'screenshot', 'desktop'],
+            TaskCategory.SYSTEM_MONITORING: ['monitor', 'cpu', 'memory', 'performance'],
             TaskCategory.RESEARCH: ['research', 'find', 'search', 'explain']
         }
         

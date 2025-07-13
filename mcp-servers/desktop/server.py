@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.mcp_client.connection import MCPConnection, MCPMessage
+from src.security import get_permission_manager, OperationType
 from window_manager import WindowManager
 from ui_automation import UIAutomation
 from keyboard_mouse import KeyboardMouse
@@ -59,6 +60,9 @@ class DesktopMCPServer:
             config_path: Path to configuration file
         """
         self.config = self._load_config(config_path)
+        
+        # Initialize security
+        self.permission_manager = get_permission_manager()
         
         # Initialize automation components
         self.window_manager = WindowManager()
@@ -114,6 +118,14 @@ class DesktopMCPServer:
         }
         
         logger.info("Desktop MCP server initialized")
+    
+    def _check_permission(self, operation: OperationType, context: Dict[str, Any] = None) -> bool:
+        """Check if operation is permitted by security manager"""
+        try:
+            return self.permission_manager.check_permission(operation, context or {})
+        except Exception as e:
+            logger.error(f"Permission check failed: {e}")
+            return False
     
     def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
         """Load server configuration"""
@@ -470,6 +482,11 @@ class DesktopMCPServer:
     
     async def _click_coordinates(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Click at specific coordinates"""
+        if not self._check_permission(OperationType.DESKTOP_INTERACT, {"action": "click"}):
+            return {
+                "success": False,
+                "error": "Permission denied: desktop interaction not allowed"
+            }
         x = args["x"]
         y = args["y"]
         button = args.get("button", "left")
@@ -497,6 +514,11 @@ class DesktopMCPServer:
     
     async def _type_text(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Type text"""
+        if not self._check_permission(OperationType.DESKTOP_INTERACT, {"action": "type"}):
+            return {
+                "success": False,
+                "error": "Permission denied: desktop interaction not allowed"
+            }
         text = args["text"]
         delay = args.get("delay", self.config["automation"]["type_delay"])
         return await self.keyboard_mouse.type_text(text, delay)
@@ -524,10 +546,20 @@ class DesktopMCPServer:
     
     async def _get_clipboard(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Get clipboard contents"""
+        if not self._check_permission(OperationType.CLIPBOARD_ACCESS):
+            return {
+                "success": False,
+                "error": "Permission denied: clipboard access not allowed"
+            }
         return await self.clipboard.get_clipboard()
     
     async def _set_clipboard(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Set clipboard contents"""
+        if not self._check_permission(OperationType.CLIPBOARD_ACCESS):
+            return {
+                "success": False,
+                "error": "Permission denied: clipboard access not allowed"
+            }
         content = args["content"]
         content_type = args.get("content_type", "text")
         return await self.clipboard.set_clipboard(content, content_type)
@@ -538,6 +570,11 @@ class DesktopMCPServer:
     
     async def _take_screenshot(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Take a screenshot"""
+        if not self._check_permission(OperationType.SCREENSHOT):
+            return {
+                "success": False,
+                "error": "Permission denied: screenshot not allowed"
+            }
         return await self.ui_automation.take_screenshot(args)
     
     async def _find_element(self, args: Dict[str, Any]) -> Dict[str, Any]:

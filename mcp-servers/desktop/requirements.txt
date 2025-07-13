@@ -1,0 +1,26 @@
+# Desktop Automation MCP Server Requirements
+
+# Core dependencies
+psutil>=5.9.0
+asyncio-mqtt>=0.11.0
+
+# Platform-specific dependencies (install as needed)
+# Linux dependencies
+# xdotool: sudo apt-get install xdotool
+# wmctrl: sudo apt-get install wmctrl  
+# xclip: sudo apt-get install xclip
+# scrot: sudo apt-get install scrot
+# gnome-screenshot: sudo apt-get install gnome-screenshot
+# tesseract: sudo apt-get install tesseract-ocr
+
+# macOS dependencies  
+# cliclick: brew install cliclick (optional)
+
+# Windows dependencies
+# No additional packages needed (uses built-in PowerShell)
+
+# Optional dependencies for enhanced functionality
+# Pillow>=9.0.0  # For image processing
+# opencv-python>=4.5.0  # For advanced computer vision
+# pytesseract>=0.3.0  # For OCR functionality
+# numpy>=1.21.0  # For image analysis

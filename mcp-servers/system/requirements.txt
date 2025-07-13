@@ -1,0 +1,10 @@
+# System Monitoring MCP Server Requirements
+
+# Core dependencies
+psutil>=5.9.0
+
+# Optional dependencies for enhanced functionality
+# prometheus-client>=0.14.0  # For Prometheus metrics export
+# py-cpuinfo>=8.0.0  # For detailed CPU information  
+# GPUtil>=1.4.0  # For GPU monitoring (if available)
+# pynvml>=11.0.0  # For NVIDIA GPU monitoring

@@ -19,6 +19,8 @@ import time
 from ..llm.ollama_client import OllamaClient, OllamaConfig, ModelType
 from ..llm.function_calling import FunctionCallHandler
 from ...mcp_client.base_client import BaseMCPClient, MCPClientConfig
+from ...mcp_client.client_manager import MCPClientManager
+from .task_router import TaskRouter, TaskCategory
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -70,7 +72,7 @@ class Task:
 class AgentConfig:
     """Configuration for agent orchestrator"""
     ollama_config: OllamaConfig
-    mcp_config: MCPClientConfig
+    mcp_configs: Dict[str, MCPClientConfig] = None  # Multiple MCP client configs
     max_concurrent_tasks: int = 5
     task_timeout: float = 300.0  # 5 minutes
     enable_screenshots: bool = True
@@ -101,7 +103,8 @@ class AgentOrchestrator:
         
         # Core components
         self.ollama_client: Optional[OllamaClient] = None
-        self.mcp_client: Optional[BaseMCPClient] = None
+        self.mcp_manager = MCPClientManager()
+        self.task_router = TaskRouter()
         self.function_handler = FunctionCallHandler()
         
         # Task management
@@ -135,11 +138,9 @@ class AgentOrchestrator:
                 logger.error("Failed to initialize Ollama client")
                 return False
             
-            # Initialize MCP client (placeholder - will be implemented with concrete client)
-            # self.mcp_client = ConcreteMCPClient(self.config.mcp_config)
-            # if not await self.mcp_client.initialize():
-            #     logger.error("Failed to initialize MCP client")
-            #     return False
+            # Initialize MCP client manager
+            if not await self.mcp_manager.initialize(self.config.mcp_configs):
+                logger.warning("No MCP clients initialized - some functionality may be limited")
             
             # Register core functions with Ollama
             await self._register_core_functions()
@@ -166,8 +167,7 @@ class AgentOrchestrator:
         if self.ollama_client:
             await self.ollama_client.shutdown()
         
-        if self.mcp_client:
-            await self.mcp_client.shutdown()
+        await self.mcp_manager.shutdown()
         
         logger.info("Agent orchestrator shutdown complete")
     
@@ -272,19 +272,35 @@ class AgentOrchestrator:
                     self.completed_tasks = self.completed_tasks[-self.config.context_retention_limit:]
     
     async def _route_task(self, task: Task) -> Dict[str, Any]:
-        """Route task to appropriate execution method"""
-        task_type = task.task_type.lower()
+        """Route task to appropriate execution method using intelligent routing"""
         
-        if task_type == "llm_query":
-            return await self._handle_llm_query(task)
-        elif task_type == "file_operation":
-            return await self._handle_file_operation(task)
-        elif task_type == "analysis":
-            return await self._handle_analysis_task(task)
-        elif task_type == "hybrid":
-            return await self._handle_hybrid_task(task)
+        # Use task router for intelligent routing
+        routing_decision = await self.task_router.route_task(
+            task.description, 
+            task.context
+        )
+        
+        # Route based on category and strategy
+        if routing_decision.category in [
+            TaskCategory.FILE_OPERATIONS, 
+            TaskCategory.DESKTOP_AUTOMATION, 
+            TaskCategory.SYSTEM_MONITORING,
+            TaskCategory.SYSTEM_INTERACTION
+        ]:
+            # Use MCP clients for these categories
+            return await self._handle_mcp_task(task, routing_decision)
+        
+        elif routing_decision.category == TaskCategory.CODE_GENERATION:
+            if routing_decision.strategy.value == "hybrid_llm_mcp":
+                return await self._handle_hybrid_task(task, routing_decision)
+            else:
+                return await self._handle_llm_query(task)
+        
+        elif routing_decision.category == TaskCategory.HYBRID:
+            return await self._handle_hybrid_task(task, routing_decision)
+        
         else:
-            # Default to LLM processing
+            # Default to LLM processing for research, analysis, etc.
             return await self._handle_llm_query(task)
     
     async def _handle_llm_query(self, task: Task) -> Dict[str, Any]:
@@ -325,25 +341,20 @@ class AgentOrchestrator:
             "model": response.model
         }
     
-    async def _handle_file_operation(self, task: Task) -> Dict[str, Any]:
-        """Handle file operation tasks via MCP servers"""
-        if not self.mcp_client:
-            raise RuntimeError("MCP client not initialized")
+    async def _handle_mcp_task(self, task: Task, routing_decision) -> Dict[str, Any]:
+        """Handle tasks that should be executed via MCP clients"""
         
-        operation = task.requirements.get("operation")
-        parameters = task.requirements.get("parameters", {})
+        # Use MCP manager to route and execute task
+        result = await self.mcp_manager.route_and_execute_task(
+            task.description,
+            task.context
+        )
         
-        if not operation:
-            raise ValueError("File operation not specified")
+        # Add task metadata
+        result["task_id"] = task.id
+        result["task_type"] = task.task_type
         
-        # Execute MCP tool
-        result = await self.mcp_client.execute_tool(operation, parameters)
-        
-        return {
-            "operation": operation,
-            "parameters": parameters,
-            "result": result
-        }
+        return result
     
     async def _handle_analysis_task(self, task: Task) -> Dict[str, Any]:
         """Handle analysis tasks that may require multiple steps"""
@@ -356,16 +367,46 @@ class AgentOrchestrator:
             "placeholder": True
         }
     
-    async def _handle_hybrid_task(self, task: Task) -> Dict[str, Any]:
+    async def _handle_hybrid_task(self, task: Task, routing_decision = None) -> Dict[str, Any]:
         """Handle hybrid tasks requiring both LLM and MCP coordination"""
-        # Placeholder for hybrid task execution
-        # This would orchestrate complex workflows between multiple components
         
-        return {
-            "task_type": "hybrid",
-            "status": "hybrid_complete", 
-            "placeholder": True
-        }
+        try:
+            # Step 1: Use LLM to analyze and plan the task
+            llm_response = await self._handle_llm_query(task)
+            
+            # Step 2: If LLM suggests MCP operations, execute them
+            mcp_results = []
+            if routing_decision and routing_decision.suggested_tools:
+                for tool in routing_decision.suggested_tools[:3]:  # Limit to prevent loops
+                    try:
+                        # Extract parameters from LLM response or task context
+                        parameters = task.context.get("parameters", {})
+                        
+                        # Route through MCP manager
+                        mcp_result = await self.mcp_manager.route_and_execute_task(
+                            f"Execute {tool} operation: {task.description}",
+                            parameters
+                        )
+                        mcp_results.append(mcp_result)
+                    except Exception as e:
+                        logger.warning(f"MCP operation {tool} failed: {e}")
+            
+            # Step 3: Combine results
+            return {
+                "task_type": "hybrid",
+                "llm_response": llm_response,
+                "mcp_results": mcp_results,
+                "status": "hybrid_complete",
+                "routing_decision": routing_decision.reasoning if routing_decision else None
+            }
+            
+        except Exception as e:
+            logger.error(f"Hybrid task execution failed: {e}")
+            return {
+                "task_type": "hybrid",
+                "status": "hybrid_failed",
+                "error": str(e)
+            }
     
     async def _register_core_functions(self):
         """Register core functions with the function handler"""
@@ -388,3 +429,16 @@ class AgentOrchestrator:
             "completed_tasks": len(self.completed_tasks),
             "running": self._running
         }
+    
+    async def get_mcp_status(self) -> Dict[str, Any]:
+        """Get MCP client status"""
+        return {
+            "clients": self.mcp_manager.get_client_status(),
+            "available_tools": self.mcp_manager.get_available_tools(),
+            "health": await self.mcp_manager.health_check()
+        }
+    
+    async def execute_mcp_tool(self, client_type: str, tool_name: str, 
+                              parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute an MCP tool directly"""
+        return await self.mcp_manager.execute_tool_directly(client_type, tool_name, parameters)
