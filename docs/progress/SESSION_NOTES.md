@@ -1,4 +1,4 @@
-# SESSION_NOTES.md - Session 1.1 - 2025-07-13
+# SESSION_NOTES.md - Sessions 1.1 & 1.2 - 2025-07-13
 
 ## Session Goals
 - [x] Analyze existing project context and documentation
@@ -56,9 +56,16 @@
 - Test coverage: Unit tests for all major components
 - Architecture: Async-first, WebSocket-based, security-focused
 
-## Next Session Handoff
-Ready for Session 1.2: Ollama Integration
-- Starting point: src/agent/llm/ollama_client.py
-- Implement local LLM client with function calling
-- Create prompt templates for task analysis
-- Begin filesystem MCP server
+## Session 1.2 Progress (Partial)
+- ✅ Complete Ollama client with async support and model management
+- ✅ Function calling framework with schema auto-generation
+- ✅ Prompt template system for task analysis and routing
+- ✅ Context window management and streaming responses
+- 🔄 **Session incomplete** - approaching token limit
+
+## Next Session Handoff  
+Continue Session 1.2: Complete filesystem MCP server implementation
+- Starting point: mcp-servers/filesystem/server.py
+- Implement secure file operations with sandboxing
+- Add search functionality and error handling
+- Complete Session 1.2 deliverables and move to Session 1.3

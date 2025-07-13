@@ -1,27 +1,28 @@
 # NEXT_STEPS.md
 
 ## Immediate Next Steps
-1. Continue with Session 1.2: Ollama Integration
-2. Implement Ollama client wrapper with function calling support
-3. Create prompt templates for task analysis
-4. Test MCP client with basic filesystem server
+1. Complete Session 1.2: Implement filesystem MCP server
+2. Create secure file operations with sandboxing
+3. Add search functionality and error handling
+4. Begin Session 1.3: File System MCP Server testing and integration
 
-## Context for Next Session
-- Current state: Phase 1.1 Basic MCP Client implementation complete
-- Key decisions made: 
-  - Async-first architecture for MCP client
-  - WebSocket-based communication with retry logic
-  - Comprehensive security framework with path validation
-  - Structured logging with component-specific levels
+## Context for Next Session  
+- Current state: Phase 1.1 complete, Session 1.2 Ollama integration ~80% complete
+- Key decisions made:
+  - Async-first architecture for MCP client and Ollama integration
+  - Function calling with automatic schema generation from Python functions
+  - Comprehensive prompt template system for task analysis and routing
+  - Multi-model support with health checking and automatic fallbacks
+  - Context window management with intelligent message truncation
 - No blocking issues identified
 
 ## Files to Review First
-1. src/mcp_client/base_client.py - Core MCP client implementation
-2. src/mcp_client/connection.py - Connection management with retry logic
-3. src/utils/config.py - Configuration system with YAML and env vars
-4. src/utils/logger.py - Logging framework with security filtering
-5. config/agent_config.yaml - Main configuration file
-6. tests/test_mcp_client.py - Comprehensive test suite
+1. src/agent/llm/ollama_client.py - Complete Ollama integration with function calling
+2. src/agent/llm/function_calling.py - Function calling framework with auto-schema generation  
+3. src/agent/llm/prompt_templates.py - Task analysis and routing prompt templates
+4. src/mcp_client/base_client.py - Core MCP client implementation
+5. docs/progress/SESSION_NOTES.md - Current session progress and context
+6. claude-me-file.md - Full project development instructions
 
 ## Environment State
 - Branch: dev-phase-1
