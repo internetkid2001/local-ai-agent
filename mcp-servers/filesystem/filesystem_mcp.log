@@ -1,0 +1,8 @@
+2025-07-12 20:07:30,994 - __main__ - INFO - Starting Filesystem MCP Server
+2025-07-12 20:07:30,994 - __main__ - INFO - Created sandbox structure at: /tmp/mcp_filesystem_sandbox
+2025-07-12 20:07:30,994 - server - INFO - Filesystem MCP server initialized
+2025-07-12 20:07:30,994 - server - INFO - Sandbox root: /tmp/mcp_filesystem_sandbox
+2025-07-12 20:07:30,994 - server - INFO - Allowed paths: ['/tmp/mcp_filesystem_sandbox', '/tmp/mcp_filesystem_sandbox/documents', '/tmp/mcp_filesystem_sandbox/workspace']
+2025-07-12 20:07:30,994 - __main__ - INFO - Starting WebSocket server on localhost:8765
+2025-07-12 20:07:30,994 - server - INFO - Starting MCP WebSocket server on localhost:8765
+2025-07-12 20:07:30,996 - server - INFO - MCP WebSocket server running on ws://localhost:8765

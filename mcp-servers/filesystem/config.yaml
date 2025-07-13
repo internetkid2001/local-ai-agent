@@ -1,0 +1,38 @@
+# Filesystem MCP Server Configuration
+
+server:
+  host: "localhost"
+  port: 8765
+  
+filesystem:
+  # Sandbox root directory - all operations are restricted to this path
+  sandbox_root: "/tmp/mcp_filesystem_sandbox"
+  
+  # Allowed paths for operations (relative to sandbox_root or absolute within sandbox)
+  allowed_paths:
+    - "/tmp/mcp_filesystem_sandbox"
+    - "/tmp/mcp_filesystem_sandbox/documents"
+    - "/tmp/mcp_filesystem_sandbox/workspace"
+  
+  # Security settings
+  max_file_size: 52428800  # 50MB in bytes
+  max_search_results: 1000
+  read_only: false
+  
+  # File type restrictions
+  allowed_extensions: []  # Empty means all extensions allowed (except denied)
+  denied_extensions:
+    - ".exe"
+    - ".bat" 
+    - ".cmd"
+    - ".scr"
+    - ".com"
+    - ".dll"
+    - ".so"
+    - ".dylib"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "filesystem_mcp.log"

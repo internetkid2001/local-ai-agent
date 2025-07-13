@@ -1,0 +1,10 @@
+# Filesystem MCP Server Requirements
+
+# WebSocket support
+websockets>=11.0.0
+
+# YAML configuration
+PyYAML>=6.0
+
+# Additional utilities
+pathlib2>=2.3.0; python_version<"3.6"
