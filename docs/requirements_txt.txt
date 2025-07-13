@@ -1,0 +1,56 @@
+# Core dependencies for Local AI Agent
+requests>=2.31.0
+asyncio-mqtt>=0.13.0
+pydantic>=2.0.0
+fastapi>=0.100.0
+uvicorn>=0.22.0
+websockets>=11.0.0
+
+# MCP (Model Context Protocol) support
+mcp>=1.0.0
+
+# UI and CLI enhancements
+rich>=13.5.0
+click>=8.1.0
+prompt_toolkit>=3.0.0
+
+# System monitoring and automation
+psutil>=5.9.0
+watchdog>=3.0.0
+schedule>=1.2.0
+
+# File handling and utilities
+aiofiles>=23.0.0
+pathspec>=0.11.0
+python-magic>=0.4.27
+
+# Logging and configuration
+pyyaml>=6.0.0
+python-dotenv>=1.0.0
+structlog>=23.0.0
+
+# Security and permissions
+cryptography>=41.0.0
+bcrypt>=4.0.0
+
+# Optional: Desktop automation (uncomment if needed)
+# pyautogui>=0.9.54
+# opencv-python>=4.8.0
+# pytesseract>=0.3.10
+# pillow>=10.0.0
+
+# Optional: Advanced AI features
+# langchain>=0.1.0
+# chromadb>=0.4.0
+# sentence-transformers>=2.2.0
+
+# Development and testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.7.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.2.0
