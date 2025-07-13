@@ -55,9 +55,19 @@ jsonrpc-websocket==3.1.5
 # requests==2.31.0  # For HTTP API calls
 
 # UI framework (Phase 4)
-# fastapi==0.104.1
-# uvicorn==0.24.0
-# jinja2==3.1.2
+fastapi==0.116.1
+uvicorn==0.35.0
+jinja2==3.1.2
+
+# Enterprise Authentication & Security (Phase 4.1)
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+
+# API Gateway & GraphQL (Phase 4.2)
+strawberry-graphql==0.275.6
+slowapi==0.1.9
+redis==6.2.0
+aioredis==2.0.1
 
 # Process management (for Open Interpreter integration)
 # psutil==5.9.6

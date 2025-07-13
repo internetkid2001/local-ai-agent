@@ -1,0 +1,188 @@
+# Environment Configuration for Local AI Agent
+# This file defines environment-specific settings
+
+environments:
+  local:
+    name: "Local Development"
+    database:
+      host: "localhost"
+      port: 5432
+      name: "ai_agent_db"
+      pool_size: 5
+      max_overflow: 10
+    
+    redis:
+      host: "localhost"
+      port: 6379
+      db: 0
+      max_connections: 20
+    
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 1
+      reload: true
+      debug: true
+    
+    logging:
+      level: "DEBUG"
+      format: "detailed"
+    
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 1000
+      requests_per_hour: 10000
+    
+    features:
+      - "authentication"
+      - "graphql"
+      - "websockets"
+      - "monitoring"
+      - "file_upload"
+
+  staging:
+    name: "Staging Environment"
+    database:
+      host: "postgres-service"
+      port: 5432
+      name: "ai_agent_db"
+      pool_size: 10
+      max_overflow: 20
+      ssl_require: false
+    
+    redis:
+      host: "redis-service"
+      port: 6379
+      db: 0
+      max_connections: 50
+    
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 2
+      reload: false
+      debug: false
+    
+    logging:
+      level: "INFO"
+      format: "json"
+    
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 500
+      requests_per_hour: 5000
+    
+    security:
+      cors_origins:
+        - "https://staging.local-ai-agent.com"
+        - "https://staging-api.local-ai-agent.com"
+      trusted_hosts:
+        - "staging.local-ai-agent.com"
+        - "staging-api.local-ai-agent.com"
+    
+    features:
+      - "authentication"
+      - "graphql"
+      - "websockets"
+      - "monitoring"
+      - "file_upload"
+      - "rate_limiting"
+
+  production:
+    name: "Production Environment"
+    database:
+      host: "postgres-service"
+      port: 5432
+      name: "ai_agent_db"
+      pool_size: 20
+      max_overflow: 40
+      ssl_require: true
+      connection_timeout: 30
+    
+    redis:
+      host: "redis-service"
+      port: 6379
+      db: 0
+      max_connections: 100
+      sentinel_enabled: true
+    
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 4
+      reload: false
+      debug: false
+      access_log: true
+    
+    logging:
+      level: "WARNING"
+      format: "json"
+      structured: true
+    
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 100
+      requests_per_hour: 1000
+      burst_limit: 200
+    
+    security:
+      cors_origins:
+        - "https://local-ai-agent.com"
+        - "https://api.local-ai-agent.com"
+        - "https://app.local-ai-agent.com"
+      trusted_hosts:
+        - "local-ai-agent.com"
+        - "api.local-ai-agent.com"
+        - "app.local-ai-agent.com"
+      csrf_protection: true
+      hsts_enabled: true
+    
+    monitoring:
+      metrics_enabled: true
+      tracing_enabled: true
+      health_checks: true
+      prometheus_endpoint: "/metrics"
+    
+    features:
+      - "authentication"
+      - "graphql"
+      - "websockets"
+      - "monitoring"
+      - "rate_limiting"
+      - "security_headers"
+      - "audit_logging"
+
+  # Test environment configuration
+  test:
+    name: "Test Environment"
+    database:
+      host: "localhost"
+      port: 5432
+      name: "test_ai_agent_db"
+      pool_size: 2
+      max_overflow: 5
+    
+    redis:
+      host: "localhost"
+      port: 6379
+      db: 1
+      max_connections: 10
+    
+    api:
+      host: "127.0.0.1"
+      port: 8001
+      workers: 1
+      reload: false
+      debug: true
+    
+    logging:
+      level: "DEBUG"
+      format: "simple"
+    
+    rate_limiting:
+      enabled: false
+    
+    features:
+      - "authentication"
+      - "graphql"
+      - "websockets"

@@ -1,0 +1,288 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    types: [completed]
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Build and Push Docker Images
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        target: production
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Generate SBOM
+      uses: anchore/sbom-action@v0
+      with:
+        image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging-api.local-ai-agent.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'latest'
+
+    - name: Deploy to Kubernetes (Staging)
+      env:
+        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_STAGING }}
+        IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+      run: |
+        echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+        
+        # Update image tag in Kubernetes manifests
+        sed -i "s|image: local-ai-agent:latest|image: $IMAGE_TAG|g" deployment/kubernetes/api-gateway.yaml
+        
+        # Apply Kubernetes manifests
+        kubectl apply -f deployment/kubernetes/namespace.yaml
+        kubectl apply -f deployment/kubernetes/configmap.yaml
+        kubectl apply -f deployment/kubernetes/secrets.yaml
+        kubectl apply -f deployment/kubernetes/redis.yaml
+        kubectl apply -f deployment/kubernetes/postgres.yaml
+        kubectl apply -f deployment/kubernetes/api-gateway.yaml
+        kubectl apply -f deployment/kubernetes/ingress.yaml
+        
+        # Wait for deployment to be ready
+        kubectl wait --for=condition=available --timeout=300s deployment/ai-agent-api -n local-ai-agent
+        
+        # Verify deployment
+        kubectl get pods -n local-ai-agent
+        kubectl get services -n local-ai-agent
+
+    - name: Run health checks
+      run: |
+        # Wait for service to be ready
+        sleep 30
+        
+        # Health check
+        curl -f https://staging-api.local-ai-agent.com/health || exit 1
+        
+        # API check
+        curl -f https://staging-api.local-ai-agent.com/ || exit 1
+
+  # Run End-to-End Tests
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Playwright
+      run: |
+        npm install -g @playwright/test
+        npx playwright install
+
+    - name: Run E2E tests
+      env:
+        BASE_URL: https://staging-api.local-ai-agent.com
+      run: |
+        # Create simple E2E test
+        cat > e2e-test.spec.js << 'EOF'
+        const { test, expect } = require('@playwright/test');
+        
+        test('API health check', async ({ request }) => {
+          const response = await request.get(`${process.env.BASE_URL}/health`);
+          expect(response.ok()).toBeTruthy();
+        });
+        
+        test('API root endpoint', async ({ request }) => {
+          const response = await request.get(`${process.env.BASE_URL}/`);
+          expect(response.ok()).toBeTruthy();
+          const data = await response.json();
+          expect(data.name).toContain('Local AI Agent');
+        });
+        
+        test('Authentication flow', async ({ request }) => {
+          const loginResponse = await request.post(`${process.env.BASE_URL}/auth/login`, {
+            data: {
+              username: 'admin',
+              password: 'admin123'
+            }
+          });
+          expect(loginResponse.ok()).toBeTruthy();
+          const loginData = await loginResponse.json();
+          expect(loginData.access_token).toBeDefined();
+        });
+        EOF
+        
+        npx playwright test e2e-test.spec.js
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push, e2e-tests]
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: https://api.local-ai-agent.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Deploy to Kubernetes (Production)
+      env:
+        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+        IMAGE_TAG: ${{ needs.build-and-push.outputs.image-tag }}
+      run: |
+        echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+        
+        # Update image tag in Kubernetes manifests
+        sed -i "s|image: local-ai-agent:latest|image: $IMAGE_TAG|g" deployment/kubernetes/api-gateway.yaml
+        
+        # Apply Kubernetes manifests with production settings
+        kubectl apply -f deployment/kubernetes/namespace.yaml
+        kubectl apply -f deployment/kubernetes/configmap.yaml
+        kubectl apply -f deployment/kubernetes/secrets.yaml
+        kubectl apply -f deployment/kubernetes/redis.yaml
+        kubectl apply -f deployment/kubernetes/postgres.yaml
+        kubectl apply -f deployment/kubernetes/api-gateway.yaml
+        kubectl apply -f deployment/kubernetes/ingress.yaml
+        kubectl apply -f deployment/kubernetes/monitoring.yaml
+        
+        # Rolling update deployment
+        kubectl rollout restart deployment/ai-agent-api -n local-ai-agent
+        kubectl rollout status deployment/ai-agent-api -n local-ai-agent --timeout=600s
+        
+        # Verify deployment
+        kubectl get pods -n local-ai-agent
+        kubectl get services -n local-ai-agent
+
+    - name: Post-deployment health checks
+      run: |
+        # Wait for service to be ready
+        sleep 60
+        
+        # Health check
+        curl -f https://api.local-ai-agent.com/health || exit 1
+        
+        # API check
+        curl -f https://api.local-ai-agent.com/ || exit 1
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## What's Changed
+          
+          This release includes the latest features and bug fixes.
+          
+          ### Docker Images
+          - `ghcr.io/${{ github.repository }}:${{ github.ref_name }}`
+          - `ghcr.io/${{ github.repository }}:latest`
+          
+          ### Deployment
+          - Production: https://api.local-ai-agent.com
+          - Documentation: https://api.local-ai-agent.com/docs
+        draft: false
+        prerelease: false
+
+  # Cleanup old images
+  cleanup:
+    name: Cleanup Old Images
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [deploy-production]
+    
+    steps:
+    - name: Delete old container images
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: ${{ env.IMAGE_NAME }}
+        package-type: 'container'
+        min-versions-to-keep: 5
+        delete-only-untagged-versions: true
