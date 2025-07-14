@@ -45,3 +45,27 @@ Thumbs.db
 
 # React app specific
 src/agent/ui/frontend/node_modules/
+src/agent/ui/frontend/build/
+src/agent/ui/frontend/dist/
+
+# Logs and databases
+*.log
+logs/
+*.pid
+*.db
+*.sqlite
+*.sqlite3
+agent_memory.db
+agent.log
+
+# Electron distribution files
+dist/
+*.dmg
+*.exe
+*.deb
+*.rpm
+*.AppImage
+
+# MCP server logs
+mcp-servers/*/logs/
+mcp-servers/*/*.log

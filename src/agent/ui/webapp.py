@@ -18,6 +18,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Requ
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from ..core.agent import Agent, AgentConfig, AgentRequest, AgentMode, AgentCapability
@@ -74,6 +75,15 @@ def create_app(config: WebUIConfig) -> FastAPI:
         debug=config.debug
     )
     
+    # Add CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # In production, specify exact origins
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
     # Initialize agent
     agent = None
     connection_manager = ConnectionManager()
@@ -93,20 +103,6 @@ def create_app(config: WebUIConfig) -> FastAPI:
         if agent:
             await agent.shutdown()
             logger.info("Agent shutdown complete")
-    
-    # Setup static files and templates
-    current_dir = Path(__file__).parent
-    
-    # Point to the React build directory
-    react_build_dir = current_dir / "frontend" / "build"
-    
-    # Ensure the build directory exists
-    if not react_build_dir.exists():
-        logger.error(f"React build directory not found: {react_build_dir}")
-        raise RuntimeError("React build not found. Please run 'npm run build' in src/agent/ui/frontend.")
-
-    # Serve the entire React build directory as static files
-    app.mount("/", StaticFiles(directory=react_build_dir, html=True), name="react_app")
     
     @app.get("/health")
     async def health_check():
@@ -228,6 +224,20 @@ def create_app(config: WebUIConfig) -> FastAPI:
     # Include API router
     api_router = APIRouter(agent)
     app.include_router(api_router.router, prefix="/api/v1")
+    
+    # Setup static files and templates - MUST be last to avoid route conflicts
+    current_dir = Path(__file__).parent
+    
+    # Point to the React build directory
+    react_build_dir = current_dir / "frontend" / "build"
+    
+    # Ensure the build directory exists
+    if not react_build_dir.exists():
+        logger.error(f"React build directory not found: {react_build_dir}")
+        raise RuntimeError("React build not found. Please run 'npm run build' in src/agent/ui/frontend.")
+
+    # Serve the entire React build directory as static files
+    app.mount("/", StaticFiles(directory=react_build_dir, html=True), name="react_app")
     
     return app
 

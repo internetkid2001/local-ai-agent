@@ -29,14 +29,14 @@ structlog==23.2.0
 rich==13.7.0
 
 # Security and validation
-cryptography==41.0.8
-python-multipart==0.0.6
+cryptography>=41.0.0
+python-multipart>=0.0.6
 
 # MCP Protocol (Model Context Protocol)
 # Note: These may need to be updated based on actual MCP Python packages
-mcp-client==0.1.0  # Placeholder - replace with actual MCP package
-jsonrpc-base==2.2.0
-jsonrpc-websocket==3.1.5
+# mcp-client==0.1.0  # Placeholder - replace with actual MCP package
+jsonrpc-base>=2.2.0
+jsonrpc-websocket>=3.1.0
 
 # Optional dependencies for advanced features (Phase 2+)
 # Uncomment as needed in later phases

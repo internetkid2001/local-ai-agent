@@ -25,6 +25,18 @@ from resource_monitor import ResourceMonitor
 from log_parser import LogParser
 from network_monitor import NetworkMonitor
 
+# Import security types
+try:
+    from src.security.permission_manager import OperationType
+except ImportError:
+    # Fallback enum if import fails
+    from enum import Enum
+    class OperationType(Enum):
+        PROCESS_LIST = "process_list"
+        LOG_ACCESS = "log_access"
+        NETWORK_ACCESS = "network_access"
+        SYSTEM_INFO = "system_info"
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
