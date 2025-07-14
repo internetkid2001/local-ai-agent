@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local AI Agent</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 p-6">
+    <div class="min-h-screen">
+        <!-- Cluely Overlay Interface (will be rendered by script.js into #app) -->
+        <div id="app"></div>
+
+        <!-- Background content to simulate desktop -->
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h1 class="text-6xl font-bold text-gray-900 dark:text-white mb-6">
+                    AI that helps before<br />you even ask.
+                </h1>
+                <p class="text-xl text-gray-600 dark:text-gray-300 mb-8">
+                    Cluely uses your screen and audio to provide intelligence<br />
+                    during meetings, sales calls, and everything on your computer.
+                </p>
+                
+                <div class="flex items-center justify-center gap-4">
+                    <button class="bg-black text-white hover:bg-gray-800 px-6 py-3 rounded-lg text-lg font-medium">
+                        📱 Download for Mac
+                    </button>
+                    <button class="border border-gray-300 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700 px-6 py-3 rounded-lg text-lg font-medium">
+                        Download for Windows
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feature sections -->
+            <div class="grid md:grid-cols-3 gap-8 mb-16">
+                <div class="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 dark:border-slate-700/30">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-blue-600 dark:text-blue-400"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Sees what you see</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Cluely sees and understands all the content on your screen — code, slides, questions, docs, dashboards.
+                    </p>
+                </div>
+
+                <div class="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 dark:border-slate-700/30">
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-green-600 dark:text-green-400"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Hears what you hear</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Cluely listens silently in the background and understands your meetings in real time — without ever joining them.
+                    </p>
+                </div>
+
+                <div class="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-white/20 dark:border-slate-700/30">
+                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-6 w-6 text-purple-600 dark:text-purple-400"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.82-.33Z"/></svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Answers anything</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Just press a key. Cluely knows what you're doing and responds with exactly what matters — no switching tabs, no guesswork.
+                    </p>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <blockquote class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                    "This feels like cheating."
+                </blockquote>
+                <p class="text-lg text-gray-600 dark:text-gray-300">
+                    <span class="underline cursor-pointer hover:text-gray-900 dark:hover:text-white">We agree.</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

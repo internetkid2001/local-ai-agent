@@ -7,8 +7,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   getPlatform: () => ipcRenderer.invoke('get-platform'),
   
-  // Window controls
-  minimizeToTray: () => ipcRenderer.send('minimize-to-tray'),
+  // Window controls for floating window
+  toggleWindow: () => ipcRenderer.invoke('toggle-window'),
+  hideWindow: () => ipcRenderer.invoke('hide-window'),
+  showWindow: () => ipcRenderer.invoke('show-window'),
+  moveWindow: (direction) => ipcRenderer.invoke('move-window', direction),
+  getWindowState: () => ipcRenderer.invoke('get-window-state'),
+  
+  // Legacy support
+  minimizeToTray: () => ipcRenderer.invoke('hide-window'),
   
   // Generic send method for compatibility
   send: (channel, data) => {
@@ -21,7 +28,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Generic invoke method for compatibility
   invoke: (channel, data) => {
-    const validChannels = ['get-app-version', 'get-platform'];
+    const validChannels = [
+      'get-app-version', 'get-platform', 'toggle-window', 
+      'hide-window', 'show-window', 'move-window', 'get-window-state'
+    ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, data);
     }

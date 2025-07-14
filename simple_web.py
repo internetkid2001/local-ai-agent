@@ -18,7 +18,7 @@ sys.path.insert(0, str(src_path))
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 import aiohttp
 import uvicorn
 
@@ -27,181 +27,14 @@ app = FastAPI(title="Local AI Agent - Simple UI", version="1.0.0")
 # Simple in-memory chat history
 chat_history = []
 
+# Mount the UI directory
+ui_path = project_root / "src" / "ui"
+app.mount("/", StaticFiles(directory=ui_path, html=True), name="ui")
+
 @app.get("/", response_class=HTMLResponse)
-async def home():
-    """Simple chat interface"""
-    html_content = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Local AI Agent - Simple Chat</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: #2563eb;
-            color: white;
-            padding: 20px;
-            border-radius: 10px 10px 0 0;
-            text-align: center;
-        }
-        .chat-container {
-            height: 400px;
-            overflow-y: auto;
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-        }
-        .message {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .user-message {
-            background: #e3f2fd;
-            text-align: right;
-        }
-        .ai-message {
-            background: #f3e5f5;
-        }
-        .input-container {
-            padding: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .message-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .send-button {
-            padding: 10px 20px;
-            background: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .send-button:hover {
-            background: #1d4ed8;
-        }
-        .send-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .status {
-            text-align: center;
-            padding: 10px;
-            font-size: 14px;
-            color: #666;
-        }
-        .loading {
-            color: #2563eb;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🤖 Local AI Agent</h1>
-            <p>Simple Chat Interface</p>
-        </div>
-        
-        <div id="chat-container" class="chat-container">
-            <div class="message ai-message">
-                <strong>AI Agent:</strong> Hello! I'm your Local AI Agent. Ask me anything!
-            </div>
-        </div>
-        
-        <div class="status" id="status">Ready</div>
-        
-        <div class="input-container">
-            <input type="text" id="message-input" class="message-input" placeholder="Type your message..." maxlength="500">
-            <button id="send-button" class="send-button">Send</button>
-        </div>
-    </div>
+async def home(request: Request):
+    return FileResponse(ui_path / "index.html")
 
-    <script>
-        const chatContainer = document.getElementById('chat-container');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        const status = document.getElementById('status');
-
-        function addMessage(content, isUser) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
-            messageDiv.innerHTML = `<strong>${isUser ? 'You' : 'AI Agent'}:</strong> ${content}`;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            // Add user message
-            addMessage(message, true);
-            messageInput.value = '';
-            sendButton.disabled = true;
-            status.textContent = 'Thinking...';
-            status.className = 'status loading';
-
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: message })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-
-                const data = await response.json();
-                addMessage(data.response, false);
-                status.textContent = 'Ready';
-                status.className = 'status';
-
-            } catch (error) {
-                addMessage(`Error: ${error.message}`, false);
-                status.textContent = 'Error occurred';
-                status.className = 'status';
-            }
-
-            sendButton.disabled = false;
-        }
-
-        sendButton.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        // Focus on input
-        messageInput.focus();
-    </script>
-</body>
-</html>
-    """
-    return HTMLResponse(content=html_content)
 
 @app.post("/chat")
 async def chat(request: Request):
@@ -232,8 +65,24 @@ async def chat(request: Request):
             async with session.post("http://localhost:11434/api/chat", json=ollama_request) as response:
                 if response.status == 200:
                     result = await response.json()
-                    ai_response = result.get("message", {}).get("content", "Sorry, I couldn't generate a response.")
+                    ai_response_content = result.get("message", {}).get("content", "Sorry, I couldn't generate a response.")
                     
+                    # For demonstration, let's try to structure a sample response
+                    # In a real scenario, the LLM would generate this structured content
+                    if "cluely" in ai_response_content.lower() or "features" in ai_response_content.lower():
+                        structured_response = {
+                            "question": "I can see you're currently viewing the Cluely website homepage. The AI assistant that monitors your screen and audio to provide contextual help before you even ask for it.",
+                            "features": [
+                                {"title": "Screen monitoring", "description": "Cluely can see what's on your screen and understand the content"},
+                                {"title": "Audio listening", "description": "It processes your calls and conversations"},
+                                {"title": "Proactive assistance", "description": "Rather than waiting for questions, it anticipates what you might need"},
+                                {"title": "Real-time help", "description": "Provides instant responses during meetings, interviews, or exams"}
+                            ]
+                        }
+                        ai_response = json.dumps(structured_response)
+                    else:
+                        ai_response = ai_response_content
+
                     # Store AI response
                     chat_history.append({"role": "assistant", "content": ai_response})
                     
