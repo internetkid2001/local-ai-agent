@@ -17,6 +17,13 @@ import json
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 
+try:
+    import websockets
+    from websockets.server import WebSocketServerProtocol
+except ImportError:
+    print("websockets library required. Install with: pip install websockets")
+    sys.exit(1)
+
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
@@ -168,7 +175,7 @@ class DesktopMCPServer:
         return default_config
     
     async def start_server(self):
-        """Start the MCP server"""
+        """Start the WebSocket MCP server"""
         self.running = True
         host = self.config["server"]["host"]
         port = self.config["server"]["port"]
@@ -176,84 +183,55 @@ class DesktopMCPServer:
         logger.info(f"Starting desktop MCP server on {host}:{port}")
         
         try:
-            server = await asyncio.start_server(
-                self._handle_client,
+            server = await websockets.serve(
+                self._handle_websocket_client,
                 host,
                 port
             )
             
             logger.info(f"Desktop MCP server running on {host}:{port}")
             
-            async with server:
-                await server.serve_forever()
+            await server.wait_closed()
                 
         except Exception as e:
             logger.error(f"Failed to start server: {e}")
             raise
     
-    async def _handle_client(self, reader, writer):
-        """Handle client connections"""
-        client_addr = writer.get_extra_info('peername')
+    async def _handle_websocket_client(self, websocket: WebSocketServerProtocol):
+        """Handle WebSocket client connections"""
+        client_addr = websocket.remote_address
         client_id = f"{client_addr[0]}:{client_addr[1]}"
         
         logger.info(f"Client connected: {client_id}")
         
         try:
-            while self.running:
-                # Read message length
-                length_bytes = await reader.read(4)
-                if not length_bytes:
-                    break
-                
-                message_length = int.from_bytes(length_bytes, byteorder='big')
-                
-                # Read message data
-                message_data = await reader.read(message_length)
-                if not message_data:
-                    break
-                
-                # Parse message
+            async for message_data in websocket:
                 try:
-                    message_json = message_data.decode('utf-8')
-                    message = json.loads(message_json)
+                    if isinstance(message_data, str):
+                        message = json.loads(message_data)
+                    else:
+                        message = json.loads(message_data.decode())
                     
-                    # Process message
                     response = await self._process_message(message)
+                    await websocket.send(json.dumps(response))
                     
-                    # Send response
-                    response_json = json.dumps(response)
-                    response_bytes = response_json.encode('utf-8')
-                    response_length = len(response_bytes)
-                    
-                    writer.write(response_length.to_bytes(4, byteorder='big'))
-                    writer.write(response_bytes)
-                    await writer.drain()
-                    
-                except Exception as e:
+                except json.JSONDecodeError as e:
                     logger.error(f"Error processing message: {e}")
                     error_response = {
-                        "jsonrpc": "2.0",
-                        "id": message.get("id"),
-                        "error": {
-                            "code": -32603,
-                            "message": str(e)
-                        }
+                        "error": {"code": -32700, "message": "Parse error"}
                     }
-                    response_json = json.dumps(error_response)
-                    response_bytes = response_json.encode('utf-8')
-                    response_length = len(response_bytes)
-                    
-                    writer.write(response_length.to_bytes(4, byteorder='big'))
-                    writer.write(response_bytes)
-                    await writer.drain()
-        
+                    await websocket.send(json.dumps(error_response))
+                except Exception as e:
+                    logger.error(f"Client handler error: {e}")
+                    error_response = {
+                        "error": {"code": -32603, "message": f"Internal error: {str(e)}"}
+                    }
+                    await websocket.send(json.dumps(error_response))
+                
         except Exception as e:
-            logger.error(f"Client handler error: {e}")
-        
+            logger.error(f"WebSocket handler error: {e}")
         finally:
             logger.info(f"Client disconnected: {client_id}")
-            writer.close()
-            await writer.wait_closed()
     
     async def _process_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Process incoming MCP message"""

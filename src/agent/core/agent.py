@@ -22,6 +22,8 @@ from ..llm.providers.base import LLMProvider, LLMConfig, Message, MessageRole, L
 from ..ai.reasoning_engine import ReasoningEngine, ReasoningTask, ReasoningMode, ReasoningResult
 from ..context.context_manager import ContextManager
 from ..context.memory_store import MemoryStore
+from ...mcp_client.client_manager import MCPClientManager
+from ...mcp_client.base_client import MCPClientConfig, MCPServerConfig
 try:
     from utils.logger import get_logger
 except ImportError:
@@ -104,11 +106,13 @@ class AgentConfig:
     max_conversation_length: int = 50
     default_timeout: float = 60.0
     llm_manager_config: Optional[LLMManagerConfig] = None
+    mcp_configs: Optional[Dict[str, Any]] = None  # MCP client configurations
     capabilities: List[AgentCapability] = field(default_factory=lambda: [
         AgentCapability.NATURAL_LANGUAGE,
         AgentCapability.REASONING,
         AgentCapability.MEMORY,
-        AgentCapability.FUNCTION_CALLING
+        AgentCapability.FUNCTION_CALLING,
+        AgentCapability.MCP_INTEGRATION
     ])
 
 
@@ -135,6 +139,7 @@ class Agent:
         self.reasoning_engine: Optional[ReasoningEngine] = None
         self.context_manager: Optional[ContextManager] = None
         self.memory_store: Optional[MemoryStore] = None
+        self.mcp_manager: Optional[MCPClientManager] = None
         
         # State management
         self.conversations: Dict[str, List[Message]] = {}
@@ -174,6 +179,14 @@ class Agent:
             self.context_manager = ContextManager()
             await self.context_manager.initialize()
             
+            # Initialize MCP client manager
+            if self.config.mcp_configs:
+                self.mcp_manager = MCPClientManager()
+                if not await self.mcp_manager.initialize(self.config.mcp_configs):
+                    logger.warning("No MCP clients initialized - some functionality may be limited")
+            else:
+                logger.info("No MCP configs provided - MCP functionality disabled")
+            
             self._initialized = True
             logger.info(f"Agent {self.config.name} initialized successfully")
             return True
@@ -193,6 +206,9 @@ class Agent:
             
             if self.context_manager:
                 await self.context_manager.shutdown()
+            
+            if self.mcp_manager:
+                await self.mcp_manager.shutdown()
             
             self.conversations.clear()
             self.active_sessions.clear()
@@ -525,7 +541,8 @@ class Agent:
 def create_basic_agent_config(
     providers: List[LLMProvider] = None,
     enable_reasoning: bool = True,
-    enable_memory: bool = True
+    enable_memory: bool = True,
+    enable_mcp: bool = True
 ) -> AgentConfig:
     """Create a basic agent configuration"""
     if providers is None:
@@ -544,10 +561,38 @@ def create_basic_agent_config(
             )
         # Add other providers as needed
     
+    # Create MCP configurations
+    mcp_configs = None
+    if enable_mcp:
+        mcp_configs = {
+            "filesystem": MCPClientConfig(
+                servers=[MCPServerConfig(
+                    name="filesystem",
+                    url="ws://localhost:8765",
+                    enabled=True
+                )]
+            ),
+            "desktop": MCPClientConfig(
+                servers=[MCPServerConfig(
+                    name="desktop",
+                    url="ws://localhost:8766",
+                    enabled=True
+                )]
+            ),
+            "system": MCPClientConfig(
+                servers=[MCPServerConfig(
+                    name="system",
+                    url="ws://localhost:8767",
+                    enabled=True
+                )]
+            )
+        }
+    
     return AgentConfig(
         llm_manager_config=llm_manager_config,
         enable_reasoning=enable_reasoning,
-        enable_memory=enable_memory
+        enable_memory=enable_memory,
+        mcp_configs=mcp_configs
     )
 
 

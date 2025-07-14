@@ -93,6 +93,50 @@ class ContextManager:
         
         logger.info("Context manager initialized")
     
+    async def initialize(self) -> bool:
+        """
+        Initialize the context manager.
+        
+        Returns:
+            True if initialization successful
+        """
+        try:
+            # Initialize memory store if not already done
+            if hasattr(self.memory_store, 'initialize'):
+                await self.memory_store.initialize()
+            
+            # Initialize pattern recognizer if needed
+            if hasattr(self.pattern_recognizer, 'initialize'):
+                await self.pattern_recognizer.initialize()
+            
+            logger.info("Context manager initialization complete")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize context manager: {e}")
+            return False
+    
+    async def shutdown(self):
+        """
+        Shutdown the context manager and cleanup resources.
+        """
+        try:
+            # Clear all context storage
+            self.session_context.clear()
+            self.user_context.clear()
+            self.system_context.clear()
+            self.temporary_context.clear()
+            self.context_relationships.clear()
+            
+            # Shutdown memory store if it has shutdown method
+            if hasattr(self.memory_store, 'shutdown'):
+                await self.memory_store.shutdown()
+            
+            logger.info("Context manager shutdown complete")
+            
+        except Exception as e:
+            logger.error(f"Error during context manager shutdown: {e}")
+    
     async def add_context(self, context_type: ContextType, scope: ContextScope,
                          data: Dict[str, Any], context_id: Optional[str] = None,
                          tags: Optional[Set[str]] = None, expiry: Optional[float] = None) -> str:

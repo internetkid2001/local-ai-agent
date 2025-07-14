@@ -242,7 +242,7 @@ class TaskRouter:
     def __init__(self):
         """Initialize task router"""
         self.classifier = TaskClassifier()
-        self.prompt_templates = PromptTemplates()
+        self.prompt_templates = PromptTemplateManager()
         
         # Tool mappings
         self.category_tools = {
