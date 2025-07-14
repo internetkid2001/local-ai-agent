@@ -240,6 +240,7 @@ class MCPConnection:
     
     async def _process_response(self, data: Dict[str, Any]):
         """Process response from MCP server"""
+        logger.info(f"Processing response: {data}")
         message_id = data.get("id")
         
         if message_id and message_id in self._pending_responses:

@@ -16,8 +16,8 @@ Session: 1.2
 """
 
 from .llm import OllamaClient
-from .task_router import TaskRouter
-from .models import Task, TaskComplexity, ExecutionPlan
+from .core.task_router import TaskRouter
+
 
 __all__ = [
     'OllamaClient',

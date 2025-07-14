@@ -15,7 +15,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from ..llm.prompt_templates import PromptTemplates
+from ..llm.prompt_templates import PromptTemplateManager
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)

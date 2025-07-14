@@ -22,7 +22,13 @@ from ..llm.providers.base import LLMProvider, LLMConfig, Message, MessageRole, L
 from ..ai.reasoning_engine import ReasoningEngine, ReasoningTask, ReasoningMode, ReasoningResult
 from ..context.context_manager import ContextManager
 from ..context.memory_store import MemoryStore
-from ...utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    # Fallback for relative imports
+    import logging
+    def get_logger(name):
+        return logging.getLogger(name)
 
 logger = get_logger(__name__)
 

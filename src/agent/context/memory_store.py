@@ -17,7 +17,13 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 
-from ...utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    # Fallback for relative imports
+    import logging
+    def get_logger(name):
+        return logging.getLogger(name)
 
 logger = get_logger(__name__)
 

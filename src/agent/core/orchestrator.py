@@ -12,7 +12,8 @@ Session: 1.3
 import asyncio
 import logging
 from typing import Dict, List, Any, Optional, Union
-from ..ai.memory_system import MemoryType, ModelMetric
+from ..ai.memory_system import MemoryType
+from ..ai.adaptation_engine import ModelMetric
 from dataclasses import dataclass
 from enum import Enum
 import time

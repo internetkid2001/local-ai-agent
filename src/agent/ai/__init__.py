@@ -12,8 +12,8 @@ from .model_orchestrator import ModelOrchestrator, ModelConfig, ModelCapability
 from .conversation_manager import ConversationManager, ConversationContext
 from .reasoning_engine import ReasoningEngine, ReasoningMode, ReasoningResult
 from .planning_engine import PlanningEngine, Plan, PlanningStrategy
-from .memory_system import MemorySystem, MemoryType, MemoryEntry
-from .adaptation_engine import AdaptationEngine, AdaptationStrategy
+from .memory_system import MemorySystem, MemoryType, MemoryItem
+from .adaptation_engine import AdaptationEngine, AdaptationType
 
 __all__ = [
     'ModelOrchestrator',

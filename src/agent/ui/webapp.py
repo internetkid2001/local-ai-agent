@@ -97,23 +97,16 @@ def create_app(config: WebUIConfig) -> FastAPI:
     # Setup static files and templates
     current_dir = Path(__file__).parent
     
-    static_dir = config.static_dir or str(current_dir / "static")
-    templates_dir = config.templates_dir or str(current_dir / "templates")
+    # Point to the React build directory
+    react_build_dir = current_dir / "frontend" / "build"
     
-    # Create directories if they don't exist
-    Path(static_dir).mkdir(exist_ok=True)
-    Path(templates_dir).mkdir(exist_ok=True)
-    
-    app.mount("/static", StaticFiles(directory=static_dir), name="static")
-    templates = Jinja2Templates(directory=templates_dir)
-    
-    # Routes
-    @app.get("/", response_class=HTMLResponse)
-    async def home(request: Request):
-        return templates.TemplateResponse("index.html", {
-            "request": request,
-            "title": "Local AI Agent"
-        })
+    # Ensure the build directory exists
+    if not react_build_dir.exists():
+        logger.error(f"React build directory not found: {react_build_dir}")
+        raise RuntimeError("React build not found. Please run 'npm run build' in src/agent/ui/frontend.")
+
+    # Serve the entire React build directory as static files
+    app.mount("/", StaticFiles(directory=react_build_dir, html=True), name="react_app")
     
     @app.get("/health")
     async def health_check():

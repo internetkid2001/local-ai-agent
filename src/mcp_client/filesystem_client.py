@@ -17,7 +17,7 @@ from pathlib import Path
 
 from .base_client import BaseMCPClient, MCPClientConfig, MCPServerConfig
 from .exceptions import MCPError, ConnectionError
-from ...utils.logger import get_logger
+from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
 
