@@ -119,6 +119,12 @@ class DesktopMCPServer:
             "find_element": self._find_element,
             "wait_for_element": self._wait_for_element,
             
+            # Visual automation
+            "analyze_screen": self._analyze_screen,
+            "find_element_by_text": self._find_element_by_text,
+            "generate_automation_script": self._generate_automation_script,
+            "click_visual_element": self._click_element,
+            
             # System info
             "get_desktop_info": self._get_desktop_info,
             "get_mouse_position": self._get_mouse_position
@@ -410,6 +416,55 @@ class DesktopMCPServer:
                     },
                     "required": ["content"]
                 }
+            },
+            {
+                "name": "analyze_screen",
+                "description": "Analyze screenshot for UI elements using visual automation",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "screenshot_path": {"type": "string", "description": "Path to screenshot file"},
+                        "create_annotated": {"type": "boolean", "default": True, "description": "Create annotated screenshot"}
+                    },
+                    "required": ["screenshot_path"]
+                }
+            },
+            {
+                "name": "find_element_by_text",
+                "description": "Find UI element by text content",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "Text to search for"},
+                        "screenshot_path": {"type": "string", "description": "Path to screenshot file"}
+                    },
+                    "required": ["text", "screenshot_path"]
+                }
+            },
+            {
+                "name": "generate_automation_script",
+                "description": "Generate automation script based on screen analysis",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "screenshot_path": {"type": "string", "description": "Path to screenshot file"},
+                        "task_description": {"type": "string", "description": "Description of automation task"}
+                    },
+                    "required": ["screenshot_path", "task_description"]
+                }
+            },
+            {
+                "name": "click_visual_element",
+                "description": "Click on UI element found by visual automation",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "element_text": {"type": "string", "description": "Text of element to click"},
+                        "screenshot_path": {"type": "string", "description": "Path to screenshot file"},
+                        "click_type": {"type": "string", "enum": ["left", "right", "double"], "default": "left"}
+                    },
+                    "required": ["element_text", "screenshot_path"]
+                }
             }
         ]
     
@@ -545,6 +600,189 @@ class DesktopMCPServer:
     async def _clipboard_history(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Get clipboard history"""
         return await self.clipboard.get_history()
+    
+    async def _analyze_screen(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze screenshot for UI elements using visual automation"""
+        try:
+            # Import visual automation engine
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.automation.visual_automation import visual_automation_engine
+            
+            screenshot_path = args["screenshot_path"]
+            create_annotated = args.get("create_annotated", True)
+            
+            # Analyze the screen
+            analysis = await visual_automation_engine.analyze_screen(screenshot_path)
+            
+            # Create annotated screenshot if requested
+            annotated_path = None
+            if create_annotated:
+                annotated_path = screenshot_path.replace(".png", "_annotated.png")
+                await visual_automation_engine.create_annotated_screenshot(analysis, annotated_path)
+            
+            return {
+                "success": True,
+                "analysis": {
+                    "timestamp": analysis.timestamp,
+                    "resolution": analysis.resolution,
+                    "elements_found": len(analysis.elements),
+                    "elements": [
+                        {
+                            "x": elem.x,
+                            "y": elem.y,
+                            "width": elem.width,
+                            "height": elem.height,
+                            "confidence": elem.confidence,
+                            "label": elem.label,
+                            "type": elem.element_type,
+                            "text": elem.text,
+                            "center": elem.center
+                        }
+                        for elem in analysis.elements
+                    ],
+                    "metadata": analysis.analysis_metadata
+                },
+                "annotated_screenshot": annotated_path
+            }
+            
+        except Exception as e:
+            logger.error(f"Screen analysis failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _find_element_by_text(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Find UI element by text content"""
+        try:
+            # Import visual automation engine
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.automation.visual_automation import visual_automation_engine
+            
+            text = args["text"]
+            screenshot_path = args["screenshot_path"]
+            
+            # Find element
+            element = await visual_automation_engine.find_element_by_text(text, screenshot_path)
+            
+            if element:
+                return {
+                    "success": True,
+                    "element": {
+                        "x": element.x,
+                        "y": element.y,
+                        "width": element.width,
+                        "height": element.height,
+                        "confidence": element.confidence,
+                        "label": element.label,
+                        "type": element.element_type,
+                        "text": element.text,
+                        "center": element.center
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Element with text '{text}' not found"
+                }
+                
+        except Exception as e:
+            logger.error(f"Find element by text failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _generate_automation_script(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate automation script based on screen analysis"""
+        try:
+            # Import visual automation engine
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.automation.visual_automation import visual_automation_engine
+            
+            screenshot_path = args["screenshot_path"]
+            task_description = args["task_description"]
+            
+            # Analyze screen first
+            analysis = await visual_automation_engine.analyze_screen(screenshot_path)
+            
+            # Generate script
+            script = await visual_automation_engine.generate_automation_script(analysis, task_description)
+            
+            return {
+                "success": True,
+                "script": script,
+                "analysis_summary": {
+                    "elements_found": len(analysis.elements),
+                    "resolution": analysis.resolution,
+                    "timestamp": analysis.timestamp
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Generate automation script failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _click_element(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Click on UI element found by visual automation"""
+        try:
+            # Import visual automation engine
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.automation.visual_automation import visual_automation_engine
+            
+            element_text = args["element_text"]
+            screenshot_path = args["screenshot_path"]
+            click_type = args.get("click_type", "left")
+            
+            # Find element by text
+            element = await visual_automation_engine.find_element_by_text(element_text, screenshot_path)
+            
+            if not element:
+                return {
+                    "success": False,
+                    "error": f"Element with text '{element_text}' not found"
+                }
+            
+            # Click the element
+            x, y = element.center
+            if click_type == "left":
+                result = await self.keyboard_mouse.click_coordinates(x, y)
+            elif click_type == "right":
+                result = await self.keyboard_mouse.click_coordinates(x, y, button="right")
+            elif click_type == "double":
+                result = await self.keyboard_mouse.click_coordinates(x, y)
+                # Double click - wait a bit then click again
+                await asyncio.sleep(0.1)
+                result = await self.keyboard_mouse.click_coordinates(x, y)
+            
+            return {
+                "success": True,
+                "element": {
+                    "text": element_text,
+                    "center": element.center,
+                    "type": element.element_type
+                },
+                "click_type": click_type,
+                "result": result
+            }
+            
+        except Exception as e:
+            logger.error(f"Click element failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
     
     async def _take_screenshot(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Take a screenshot"""
