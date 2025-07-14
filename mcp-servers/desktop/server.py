@@ -125,6 +125,12 @@ class DesktopMCPServer:
             "generate_automation_script": self._generate_automation_script,
             "click_visual_element": self._click_element,
             
+            # AI vision analysis
+            "ai_analyze_screenshot": self._ai_analyze_screenshot,
+            "ai_compare_screenshots": self._ai_compare_screenshots,
+            "ai_automation_suggestions": self._ai_automation_suggestions,
+            "ai_batch_analyze": self._ai_batch_analyze,
+            
             # System info
             "get_desktop_info": self._get_desktop_info,
             "get_mouse_position": self._get_mouse_position
@@ -465,6 +471,58 @@ class DesktopMCPServer:
                     },
                     "required": ["element_text", "screenshot_path"]
                 }
+            },
+            {
+                "name": "ai_analyze_screenshot",
+                "description": "AI-powered screenshot analysis using vision capabilities",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "image_path": {"type": "string", "description": "Path to screenshot file"},
+                        "custom_prompt": {"type": "string", "description": "Custom analysis prompt (optional)"}
+                    },
+                    "required": ["image_path"]
+                }
+            },
+            {
+                "name": "ai_compare_screenshots",
+                "description": "Compare two screenshots using AI vision analysis",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "image1_path": {"type": "string", "description": "Path to first screenshot"},
+                        "image2_path": {"type": "string", "description": "Path to second screenshot"}
+                    },
+                    "required": ["image1_path", "image2_path"]
+                }
+            },
+            {
+                "name": "ai_automation_suggestions",
+                "description": "Generate AI-powered automation suggestions based on screenshot and goal",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "image_path": {"type": "string", "description": "Path to screenshot file"},
+                        "goal": {"type": "string", "description": "User's automation goal"}
+                    },
+                    "required": ["image_path", "goal"]
+                }
+            },
+            {
+                "name": "ai_batch_analyze",
+                "description": "Analyze multiple screenshots in batch using AI vision",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "image_paths": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of screenshot paths to analyze"
+                        },
+                        "create_report": {"type": "boolean", "default": True, "description": "Create comprehensive report"}
+                    },
+                    "required": ["image_paths"]
+                }
             }
         ]
     
@@ -779,6 +837,132 @@ class DesktopMCPServer:
             
         except Exception as e:
             logger.error(f"Click element failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _ai_analyze_screenshot(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """AI-powered screenshot analysis using vision capabilities"""
+        try:
+            # Import vision analyzer
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.ai.vision_analyzer import vision_analyzer
+            
+            image_path = args["image_path"]
+            custom_prompt = args.get("custom_prompt")
+            
+            # Perform AI analysis
+            result = await vision_analyzer.analyze_screenshot(image_path, custom_prompt)
+            
+            return {
+                "success": True,
+                "analysis": result.to_dict(),
+                "description": result.content.description,
+                "context": result.content.context,
+                "applications": result.content.applications,
+                "actions_suggested": result.content.actions_suggested,
+                "accessibility_info": result.content.accessibility_info,
+                "sentiment": result.content.sentiment,
+                "complexity_score": result.content.complexity_score,
+                "confidence": result.confidence,
+                "processing_time": result.processing_time
+            }
+            
+        except Exception as e:
+            logger.error(f"AI screenshot analysis failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _ai_compare_screenshots(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Compare two screenshots using AI vision analysis"""
+        try:
+            # Import vision analyzer
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.ai.vision_analyzer import vision_analyzer
+            
+            image1_path = args["image1_path"]
+            image2_path = args["image2_path"]
+            
+            # Perform comparison
+            result = await vision_analyzer.compare_screenshots(image1_path, image2_path)
+            
+            return {
+                "success": True,
+                "comparison": result
+            }
+            
+        except Exception as e:
+            logger.error(f"AI screenshot comparison failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _ai_automation_suggestions(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate AI-powered automation suggestions"""
+        try:
+            # Import vision analyzer
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.ai.vision_analyzer import vision_analyzer
+            
+            image_path = args["image_path"]
+            goal = args["goal"]
+            
+            # Generate suggestions
+            result = await vision_analyzer.generate_automation_suggestions(image_path, goal)
+            
+            return {
+                "success": True,
+                "suggestions": result
+            }
+            
+        except Exception as e:
+            logger.error(f"AI automation suggestions failed: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    async def _ai_batch_analyze(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze multiple screenshots in batch using AI vision"""
+        try:
+            # Import vision analyzer
+            import sys
+            from pathlib import Path
+            sys.path.append(str(Path(__file__).parent.parent.parent))
+            from src.agent.ai.vision_analyzer import vision_analyzer
+            
+            image_paths = args["image_paths"]
+            create_report = args.get("create_report", True)
+            
+            # Perform batch analysis
+            results = await vision_analyzer.batch_analyze(image_paths)
+            
+            response = {
+                "success": True,
+                "total_images": len(image_paths),
+                "successful_analyses": len(results),
+                "results": [result.to_dict() for result in results]
+            }
+            
+            # Create report if requested
+            if create_report:
+                report = await vision_analyzer.create_analysis_report(results)
+                response["report"] = report
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"AI batch analysis failed: {e}")
             return {
                 "success": False,
                 "error": str(e)

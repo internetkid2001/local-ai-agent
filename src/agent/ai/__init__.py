@@ -14,6 +14,7 @@ from .reasoning_engine import ReasoningEngine, ReasoningMode, ReasoningResult
 from .planning_engine import PlanningEngine, Plan, PlanningStrategy
 from .memory_system import MemorySystem, MemoryType, MemoryItem
 from .adaptation_engine import AdaptationEngine, AdaptationType
+from .vision_analyzer import VisionAnalyzer, VisionAnalysisResult, ScreenContent, vision_analyzer
 
 __all__ = [
     'ModelOrchestrator',
@@ -31,5 +32,9 @@ __all__ = [
     'MemoryType',
     'MemoryEntry',
     'AdaptationEngine',
-    'AdaptationStrategy'
+    'AdaptationStrategy',
+    'VisionAnalyzer',
+    'VisionAnalysisResult',
+    'ScreenContent',
+    'vision_analyzer'
 ]
