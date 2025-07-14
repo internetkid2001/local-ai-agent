@@ -342,7 +342,7 @@ class AdvancedRetryManager:
                 correlation_id=correlation_id
             )
         
-        result = RetryResult(correlation_id=correlation_id)
+        result = RetryResult(success=False, correlation_id=correlation_id)
         start_time = time.time()
         
         for attempt in range(1, self.config.max_attempts + 1):
