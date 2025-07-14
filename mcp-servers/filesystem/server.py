@@ -380,6 +380,7 @@ class FileSystemMCPServer:
             if request_id:
                 response["id"] = request_id
             
+            logger.info(f"Sending response: {response}")
             return response
             
         except Exception as e:
@@ -733,7 +734,7 @@ class MCPWebSocketServer:
         self.port = port
         self.clients = set()
     
-    async def handle_client(self, websocket: WebSocketServerProtocol, path: str):
+    async def handle_client(self, websocket: WebSocketServerProtocol):
         """Handle WebSocket client connection"""
         self.clients.add(websocket)
         logger.info(f"Client connected: {websocket.remote_address}")

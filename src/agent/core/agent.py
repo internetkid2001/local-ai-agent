@@ -57,6 +57,7 @@ class AgentCapability(Enum):
     SYSTEM_COMMANDS = "system_commands"
     VISION = "vision"
     MCP_INTEGRATION = "mcp_integration"
+    ORCHESTRATION = "orchestration"
 
 
 @dataclass
@@ -140,6 +141,7 @@ class Agent:
         self.context_manager: Optional[ContextManager] = None
         self.memory_store: Optional[MemoryStore] = None
         self.mcp_manager: Optional[MCPClientManager] = None
+        self.orchestrator: Optional['MCPOrchestrator'] = None
         
         # State management
         self.conversations: Dict[str, List[Message]] = {}
@@ -184,6 +186,13 @@ class Agent:
                 self.mcp_manager = MCPClientManager()
                 if not await self.mcp_manager.initialize(self.config.mcp_configs):
                     logger.warning("No MCP clients initialized - some functionality may be limited")
+                
+                # Initialize orchestrator if MCP is available
+                if self.mcp_manager:
+                    from ..orchestration.mcp_orchestrator import MCPOrchestrator
+                    self.orchestrator = MCPOrchestrator(self.mcp_manager)
+                    await self.orchestrator.initialize()
+                    logger.info("MCP Orchestrator initialized")
             else:
                 logger.info("No MCP configs provided - MCP functionality disabled")
             
@@ -206,6 +215,9 @@ class Agent:
             
             if self.context_manager:
                 await self.context_manager.shutdown()
+            
+            if self.orchestrator:
+                await self.orchestrator.shutdown()
             
             if self.mcp_manager:
                 await self.mcp_manager.shutdown()
@@ -483,6 +495,13 @@ class Agent:
         
         if self.llm_manager:
             status["llm_providers"] = self.llm_manager.get_provider_status()
+        
+        if self.orchestrator:
+            status["orchestrator"] = {
+                "initialized": True,
+                "active_workflows": len(self.orchestrator.active_workflows),
+                "completed_workflows": len(self.orchestrator.execution_history)
+            }
         
         return status
     
