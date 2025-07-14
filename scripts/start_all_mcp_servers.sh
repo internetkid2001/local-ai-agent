@@ -103,6 +103,9 @@ main() {
     
     # Start system monitoring MCP server (port 8767)
     start_mcp_server "system" "$PROJECT_DIR/mcp-servers/system" 8767
+
+    # Start AI Bridge MCP server (port 8005)
+    start_mcp_server "ai_bridge" "$PROJECT_DIR/mcp-servers/ai_bridge" 8005
     
     echo
     print_status "MCP Server startup complete!"
@@ -111,6 +114,7 @@ main() {
     echo "  - Filesystem MCP:     localhost:8765"
     echo "  - Desktop Automation: localhost:8766"
     echo "  - System Monitoring:  localhost:8767"
+    echo "  - AI Bridge:          localhost:8005"
     echo
     print_status "Logs are available in: $PROJECT_DIR/logs/"
     print_status "To stop servers, run: $SCRIPT_DIR/stop_all_mcp_servers.sh"

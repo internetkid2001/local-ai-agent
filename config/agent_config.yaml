@@ -11,11 +11,43 @@ llm:
   provider: "ollama"
   host: "http://localhost:11434"
   
+  # Model Orchestrator Configuration
+  orchestrator:
+    enabled: true
+    # Weights for scoring models (quality, performance, cost, availability)
+    scoring_weights:
+      quality: 0.4
+      performance: 0.3
+      cost: 0.2
+      availability: 0.1
+
+  # Register all available models for the orchestrator
   models:
-    primary: "llama3.1:8b"
-    code: "codellama:7b"
-    fallback: "mistral:7b"
-  
+    - model_id: "ollama:llama3.1:8b"
+      name: "Llama 3.1 8B"
+      capabilities: ["text_generation", "reasoning", "creative_writing", "summarization"]
+      priority: 9
+      
+    - model_id: "ollama:codellama:7b"
+      name: "CodeLlama 7B"
+      capabilities: ["code_generation", "reasoning", "mathematics"]
+      priority: 10 # Highest priority for coding tasks
+      
+    - model_id: "ollama:llama3:8b"
+      name: "Llama 3 8B Instruct"
+      capabilities: ["function_calling", "question_answering", "text_generation"]
+      priority: 9
+      
+    - model_id: "ollama:phi3:14b"
+      name: "Phi-3 Medium 14B"
+      capabilities: ["analysis", "reasoning", "mathematics", "text_generation"]
+      priority: 8
+      
+    - model_id: "ollama:mistral:7b"
+      name: "Mistral 7B"
+      capabilities: ["text_generation", "summarization"]
+      priority: 7 # Good fallback model
+
   context_window: 8192
   max_tokens: 2048
   
