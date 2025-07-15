@@ -226,8 +226,8 @@ function FloatingApp() {
             // First take a screenshot, then analyze it
             sendMessage('/mcp desktop take_screenshot');
             setTimeout(() => {
-              sendMessage('analyze the screenshot I just took and describe what you see');
-            }, 1000);
+              sendMessage('I just took a screenshot. Please analyze the file at ~/Desktop/local_ai_agent_screenshot.png and describe what you see.');
+            }, 1500);
           }}
           title="Analyze screen"
           disabled={!isConnected}
