@@ -3,6 +3,7 @@ import { Mic, MicOff, Eye, EyeOff, Settings, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAgentWebSocket } from './hooks/useAgentWebSocket';
+import { useDragging } from './hooks/useDragging';
 import { Message } from './types/messages';
 
 const App: React.FC = () => {
@@ -21,6 +22,9 @@ const App: React.FC = () => {
     connectionState, 
     isConnected
   } = useAgentWebSocket('ws://localhost:8090/ws');
+
+  // Add dragging functionality
+  const { position, isDragging, handleMouseDown } = useDragging({ x: 50, y: 50 });
 
   // Check if running in Electron
   useEffect(() => {
@@ -137,11 +141,19 @@ const App: React.FC = () => {
       {/* Floating Window */}
       <div 
         ref={containerRef}
-        className="fixed top-6 right-6 z-50"
+        className="fixed z-50"
+        style={{ 
+          left: `${position.x}px`, 
+          top: `${position.y}px`,
+          cursor: isDragging ? 'grabbing' : 'auto'
+        }}
       >
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 w-80 floating-chat-container">
-          {/* Header with recording controls */}
-          <div className="flex items-center justify-between p-4 border-b border-border/50">
+          {/* Header with recording controls - Make draggable */}
+          <div 
+            className="flex items-center justify-between p-4 border-b border-border/50 cursor-move"
+            onMouseDown={handleMouseDown}
+          >
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full ${
                 isRecording ? 'bg-blue-500 animate-pulse' : 
@@ -233,7 +245,7 @@ const App: React.FC = () => {
           {/* Quick Actions */}
           {isVisible && (
             <div className="p-4 border-t border-border/50">
-              <div className="flex space-x-2 mb-3">
+              <div className="grid grid-cols-2 gap-2 mb-3">
                 <Button
                   size="sm"
                   variant="outline"
@@ -246,11 +258,38 @@ const App: React.FC = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => sendMessage('/status')}
+                  onClick={() => sendMessage('/mcp system get_system_info')}
                   disabled={!isConnected}
                   className="text-xs"
                 >
-                  📊 Status
+                  🖥️ System Info
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => sendMessage('/mcp system get_processes')}
+                  disabled={!isConnected}
+                  className="text-xs"
+                >
+                  ⚙️ Processes
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => sendMessage('/mcp system get_memory_info')}
+                  disabled={!isConnected}
+                  className="text-xs"
+                >
+                  💾 Memory
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => sendMessage('/mcp system get_disk_usage')}
+                  disabled={!isConnected}
+                  className="text-xs"
+                >
+                  💿 Disk
                 </Button>
                 <Button
                   size="sm"

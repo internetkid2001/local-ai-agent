@@ -266,3 +266,6 @@ websockets.exceptions.ConnectionClosedError: no close frame received or sent
 2025-07-14 14:11:56,430 - server - INFO - Sending response: {'error': {'code': -32602, 'message': 'Security error: Path outside sandbox: /tmp/mcp_test.txt'}, 'id': '08b3482d-0991-429f-a9d0-588dafe1e211'}
 2025-07-14 14:11:56,430 - server - INFO - Sending response: {'error': {'code': -32602, 'message': 'Security error: Path outside sandbox: /tmp/mcp_test.txt'}, 'id': '7c84ec9f-4164-4fd5-8e8d-b18008649b80'}
 2025-07-14 14:11:56,431 - server - INFO - Client disconnected: ('127.0.0.1', 47620)
+2025-07-14 21:19:49,372 - websockets.server - INFO - connection open
+2025-07-14 21:19:49,372 - server - INFO - Client connected: ('127.0.0.1', 56432)
+2025-07-14 21:19:49,373 - server - INFO - Client disconnected: ('127.0.0.1', 56432)

@@ -138,6 +138,14 @@ class TerminalBridge:
             return self.list_files(path)
         elif server == "system" and cmd == "get_info":
             return self.get_system_info()
+        elif server == "system" and cmd == "get_system_info":
+            return self.get_system_info()
+        elif server == "system" and cmd == "get_processes":
+            return self.get_processes()
+        elif server == "system" and cmd == "get_memory_info":
+            return self.get_memory_info()
+        elif server == "system" and cmd == "get_disk_usage":
+            return self.get_disk_usage()
         else:
             return f"MCP command not implemented: {server} {cmd}"
     
@@ -207,6 +215,46 @@ class TerminalBridge:
             return "🖥️ System Info:\n" + "\n".join(info)
         except Exception as e:
             return f"❌ System info error: {e}"
+    
+    def get_processes(self) -> str:
+        """Get running processes"""
+        try:
+            result = subprocess.run(['ps', 'aux', '--sort=-%cpu'], capture_output=True, text=True)
+            if result.returncode == 0:
+                lines = result.stdout.strip().split('\n')
+                # Get top 10 processes
+                if len(lines) > 11:
+                    header = lines[0]
+                    processes = lines[1:11]
+                    return f"⚙️ Top 10 Processes:\n{header}\n" + "\n".join(processes)
+                else:
+                    return f"⚙️ Processes:\n{result.stdout}"
+            else:
+                return f"❌ Error getting processes: {result.stderr}"
+        except Exception as e:
+            return f"❌ Process error: {e}"
+    
+    def get_memory_info(self) -> str:
+        """Get detailed memory information"""
+        try:
+            result = subprocess.run(['free', '-h'], capture_output=True, text=True)
+            if result.returncode == 0:
+                return f"💾 Memory Information:\n{result.stdout}"
+            else:
+                return f"❌ Error getting memory info: {result.stderr}"
+        except Exception as e:
+            return f"❌ Memory info error: {e}"
+    
+    def get_disk_usage(self) -> str:
+        """Get disk usage information"""
+        try:
+            result = subprocess.run(['df', '-h'], capture_output=True, text=True)
+            if result.returncode == 0:
+                return f"💿 Disk Usage:\n{result.stdout}"
+            else:
+                return f"❌ Error getting disk usage: {result.stderr}"
+        except Exception as e:
+            return f"❌ Disk usage error: {e}"
     
     def get_help(self) -> str:
         """Get help information"""
