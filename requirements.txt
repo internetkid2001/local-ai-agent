@@ -52,7 +52,8 @@ jsonrpc-websocket>=3.1.0
 
 # LLM integration
 # ollama==0.1.5  # When available
-# requests==2.31.0  # For HTTP API calls
+requests==2.31.0  # For HTTP API calls
+google-generativeai>=0.3.0
 
 # UI framework (Phase 4)
 fastapi==0.116.1

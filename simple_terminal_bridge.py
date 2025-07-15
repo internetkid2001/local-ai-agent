@@ -15,6 +15,8 @@ from fastapi.responses import JSONResponse
 import uvicorn
 import aiohttp
 from typing import Dict, List, Any
+from model_selector import ModelSelector, ModelType
+from gemini_integration import GeminiIntegration
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +31,8 @@ class TerminalBridge:
     def __init__(self):
         self.ollama_url = "http://localhost:11434"
         self.conversation_history = []
+        self.model_selector = ModelSelector()
+        self.gemini = GeminiIntegration()
     
     async def chat_with_ollama(self, message: str) -> str:
         """Send message to Ollama for AI response"""
@@ -412,12 +416,24 @@ async def websocket_endpoint(websocket: WebSocket):
                         "message": command_result
                     }))
                 else:
-                    # Regular AI chat
-                    ai_response = await bridge.chat_with_ollama(user_message)
+                    # Use model selector to choose the best model
+                    selected_model = bridge.model_selector.select_model(user_message)
+                    
+                    if selected_model == ModelType.GEMINI:
+                        ai_response = await bridge.gemini.chat(user_message)
+                        model_used = "Gemini"
+                    else:
+                        ai_response = await bridge.chat_with_ollama(user_message)
+                        model_used = "Ollama"
+                    
+                    # Log model selection
+                    logger.info(f"Model selected: {selected_model.value} for message: {user_message[:50]}...")
+                    
                     await websocket.send_text(json.dumps({
                         "type": "ai_response",
                         "message": ai_response,
-                        "role": "assistant"
+                        "role": "assistant",
+                        "model_used": model_used
                     }))
     
     except WebSocketDisconnect:
