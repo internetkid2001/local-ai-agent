@@ -40,16 +40,25 @@ class TerminalBridge:
             messages = self.conversation_history[-10:]
             
             payload = {
-                "model": "deepseek-r1:latest",
+                "model": "llama3:8b",
                 "messages": messages,
                 "stream": False,
                 "options": {
                     "temperature": 0.7,
-                    "num_predict": 500
+                    "num_predict": 200,  # Reduced for faster responses
+                    "num_ctx": 2048,     # Smaller context for speed
+                    "num_batch": 512,    # Optimized batch size
+                    "num_gpu": 1,        # Use GPU if available
+                    "num_thread": 4,     # Optimize thread count
+                    "repeat_penalty": 1.1,
+                    "top_k": 40,
+                    "top_p": 0.9
                 }
             }
             
-            async with aiohttp.ClientSession() as session:
+            # Add timeout to prevent hanging
+            timeout = aiohttp.ClientTimeout(total=15)  # 15 second timeout
+            async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.post(f"{self.ollama_url}/api/chat", json=payload) as response:
                     if response.status == 200:
                         result = await response.json()
