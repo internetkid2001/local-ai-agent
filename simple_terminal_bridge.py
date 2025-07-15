@@ -66,6 +66,54 @@ class TerminalBridge:
             logger.error(f"Error chatting with Ollama: {e}")
             return f"Error connecting to Ollama: {e}"
     
+    def handle_nlp_command(self, message: str) -> str:
+        """Interpret natural language commands with fuzzy matching"""
+        import re
+        
+        # Normalize the message
+        normalized_message = message.lower().strip()
+        
+        # Define keyword patterns for different commands
+        patterns = {
+            # System information patterns
+            r'(system|computer|machine).*(info|information|details|specs|about)': '/mcp system get_system_info',
+            r'(show|get|tell me).*(system|computer|machine).*(info|information|details|specs)': '/mcp system get_system_info',
+            r'^(system info|system information|computer info|machine info)': '/mcp system get_system_info',
+            
+            # Process patterns
+            r'(show|list|get|see).*(process|running|tasks?)': '/mcp system get_processes',
+            r'(what|which).*(process|running|tasks?)': '/mcp system get_processes',
+            r'^(processes|running processes|tasks)': '/mcp system get_processes',
+            
+            # Memory patterns
+            r'(memory|ram).*(usage|info|information|status)': '/mcp system get_memory_info',
+            r'(show|get|check).*(memory|ram)': '/mcp system get_memory_info',
+            r'^(memory|ram|memory usage|ram usage)': '/mcp system get_memory_info',
+            
+            # Disk patterns
+            r'(disk|storage|drive).*(usage|space|info|information)': '/mcp system get_disk_usage',
+            r'(show|get|check).*(disk|storage|drive)': '/mcp system get_disk_usage',
+            r'^(disk|storage|disk usage|storage usage)': '/mcp system get_disk_usage',
+            
+            # Screenshot patterns
+            r'(take|capture|grab|make).*(screenshot|screen shot|picture|image)': '/mcp desktop take_screenshot',
+            r'(screenshot|screen shot|capture screen)': '/mcp desktop take_screenshot',
+            r'^screenshot': '/mcp desktop take_screenshot',
+            
+            # File listing patterns
+            r'(list|show|see).*(files?|directory|folder)': '/mcp filesystem list_files .',
+            r'(what|which).*(files?|directory|folder)': '/mcp filesystem list_files .',
+            r'^(files|ls|dir)': '/mcp filesystem list_files .'
+        }
+        
+        # Try to match patterns
+        for pattern, command in patterns.items():
+            if re.search(pattern, normalized_message):
+                return self.handle_mcp_command(command)
+        
+        # If no pattern matches, return None to trigger AI chat
+        return None
+
     def execute_command(self, command: str) -> str:
         """Execute a simple system command"""
         try:
@@ -83,8 +131,13 @@ class TerminalBridge:
                 else:
                     return f"Unknown command: {command}"
             else:
-                # Regular chat message
-                return None
+                # Try to interpret as natural language command first
+                nlp_result = self.handle_nlp_command(command)
+                if nlp_result is not None:
+                    return nlp_result
+                else:
+                    # If no command matched, return None to trigger AI chat
+                    return None
         except Exception as e:
             return f"Error executing command: {e}"
     
@@ -260,13 +313,29 @@ class TerminalBridge:
         """Get help information"""
         return """🤖 Local AI Agent Terminal Help
 
-Available Commands:
+Natural Language Commands:
+• "take a screenshot" - Capture screen
+• "show system info" - Display system information
+• "list processes" - Show running processes
+• "memory usage" - Display memory information
+• "disk usage" - Show disk space
+• "show files" - List current directory files
+
+Traditional Commands:
 • /status - Show system status
 • /help - Show this help
 • /clear - Clear conversation history
 • /mcp desktop take_screenshot - Take a screenshot
 • /mcp filesystem list_files [path] - List files
 • /mcp system get_info - Get system information
+
+Examples of Natural Language:
+• "What processes are running?"
+• "Show me the system information"
+• "How much memory is being used?"
+• "Take a screenshot of the desktop"
+• "Check disk space"
+• "List the files in this directory"
 
 Regular messages will be sent to the AI for response.
 

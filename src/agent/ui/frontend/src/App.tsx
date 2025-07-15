@@ -103,9 +103,16 @@ const App: React.FC = () => {
 
   const formatMessage = (message: Message) => {
     if (message.type === 'system') {
+      // Check if it's a system command response with emoji indicators
+      const isSystemCommand = message.content.includes('🖥️') || message.content.includes('⚙️') || 
+                             message.content.includes('💾') || message.content.includes('💿') || 
+                             message.content.includes('📸') || message.content.includes('📁');
+      
       return (
         <div className="mb-3 p-3 bg-muted rounded-lg border">
-          <div className="text-muted-foreground text-sm whitespace-pre-wrap">{message.content}</div>
+          <div className={`text-sm whitespace-pre-wrap font-mono ${isSystemCommand ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+            {message.content}
+          </div>
         </div>
       );
     }
@@ -151,7 +158,9 @@ const App: React.FC = () => {
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 w-80 floating-chat-container">
           {/* Header with recording controls - Make draggable */}
           <div 
-            className="flex items-center justify-between p-4 border-b border-border/50 cursor-move"
+            className={`flex items-center justify-between p-4 border-b border-border/50 select-none ${
+              isDragging ? 'cursor-grabbing' : 'cursor-grab'
+            }`}
             onMouseDown={handleMouseDown}
           >
             <div className="flex items-center gap-3">

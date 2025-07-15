@@ -30,7 +30,7 @@ cd -
 
 # Start the WebSocket server in background
 echo "🌐 Starting WebSocket server..."
-python3 mcp_chat_bridge.py &
+python3 simple_terminal_bridge.py &
 WEBSOCKET_PID=$!
 
 # Wait for WebSocket server to start

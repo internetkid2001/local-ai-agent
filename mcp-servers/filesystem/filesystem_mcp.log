@@ -269,3 +269,9 @@ websockets.exceptions.ConnectionClosedError: no close frame received or sent
 2025-07-14 21:19:49,372 - websockets.server - INFO - connection open
 2025-07-14 21:19:49,372 - server - INFO - Client connected: ('127.0.0.1', 56432)
 2025-07-14 21:19:49,373 - server - INFO - Client disconnected: ('127.0.0.1', 56432)
+2025-07-14 21:32:34,581 - websockets.server - INFO - connection open
+2025-07-14 21:32:34,582 - server - INFO - Client connected: ('127.0.0.1', 53438)
+2025-07-14 21:32:34,582 - server - INFO - Client disconnected: ('127.0.0.1', 53438)
+2025-07-14 21:44:51,478 - websockets.server - INFO - connection open
+2025-07-14 21:44:51,478 - server - INFO - Client connected: ('127.0.0.1', 50314)
+2025-07-14 21:44:51,478 - server - INFO - Client disconnected: ('127.0.0.1', 50314)
