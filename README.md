@@ -1,144 +1,230 @@
-# Local AI Agent with MCP Integration
+# Local AI Agent - Floating Desktop Application
 
-A locally running AI agent that can interact with your computer through Model Context Protocol (MCP) servers to help manage files, automate tasks, and provide intelligent assistance.
+A beautiful, floating desktop AI assistant inspired by Cluely's design, featuring transparent glass morphism UI and MCP (Model Context Protocol) server integration for desktop automation and computer vision.
 
-## System Specifications
-- **CPU**: AMD Ryzen 7 3700X (8 cores, 16 threads, 3.6-4.4 GHz)
-- **RAM**: 31.28 GB (27 GB available)
-- **GPU**: AMD Radeon RX 6600 XT (~8GB VRAM)
-- **OS**: Linux (Ubuntu-based)
+## 🚀 Quick Start
 
-## Project Structure
+### Prerequisites
+
+- **Python 3.8+** with pip
+- **Node.js 16+** with npm
+- **Linux Desktop Environment** (tested on Ubuntu/GNOME)
+- **Ollama** (for local AI models)
+
+### 🖥️ Command Line Interface
+
+#### 1. Start MCP Servers
+
+```bash
+cd /home/vic/Documents/CODE/local-ai-agent
+
+# Start all MCP servers (filesystem, desktop, system)
+./scripts/start_all_mcp_servers.sh
+```
+
+#### 2. Run Terminal Bridge
+
+```bash
+# Start the terminal chat bridge
+python3 simple_terminal_bridge.py
+```
+
+The terminal bridge provides:
+- WebSocket endpoint: `ws://localhost:8090/ws`
+- Direct chat interface in terminal
+- MCP command integration (`/mcp`, `/status`, `/help`)
+
+#### 3. Available Commands
+
+```bash
+# MCP Commands
+/mcp desktop take_screenshot    # Take and save screenshot
+/status                        # Show system status
+/help                          # Show help
+
+# Direct queries
+hello                          # Chat with AI
+what are my pc specs          # Get system information
+```
+
+### 🎨 Floating Desktop App (Electron)
+
+#### 1. Install Dependencies
+
+```bash
+cd src/agent/ui/frontend
+
+# Install Node.js dependencies
+npm install
+```
+
+#### 2. Build the React App
+
+```bash
+# Build production React app
+npm run build
+```
+
+#### 3. Start the Floating Desktop App
+
+```bash
+# Launch Electron floating window
+npm run electron
+```
+
+#### 4. Desktop App Features
+
+- **🎯 Floating Window**: Always-on-top transparent window
+- **⌨️ Global Shortcuts**:
+  - `Ctrl+B`: Toggle window visibility
+  - `Ctrl+H`: Hide window
+  - `Ctrl+Arrow Keys`: Move window
+  - `Ctrl+N`: New chat
+- **🎨 UI Design**: Cluely-inspired dark glass morphism
+- **📸 Screenshots**: Save to Desktop/Pictures folder
+- **🔌 MCP Integration**: Desktop automation capabilities
+
+## 🛠️ Development
+
+### React Development Server
+
+```bash
+cd src/agent/ui/frontend
+
+# Start development server (port 3002)
+PORT=3002 npm start
+```
+
+### Electron Development
+
+```bash
+# Development mode with DevTools
+ELECTRON_IS_DEV=true npm run electron
+```
+
+### Building for Distribution
+
+```bash
+# Build React + Electron app
+npm run build-electron
+
+# Create distributable packages
+npm run dist
+```
+
+## 📁 Project Structure
 
 ```
 local-ai-agent/
-├── README.md                 # This file
-├── requirements.txt          # Python dependencies
-├── setup.sh                 # Installation script
-├── src/                     # Main application code
-│   ├── agent/               # AI agent implementation
-│   ├── mcp_client/          # MCP client integration
-│   ├── ui/                  # User interface
-│   └── utils/               # Utility functions
-├── mcp-servers/             # Custom MCP server implementations
-│   ├── filesystem/          # File management server
-│   ├── system/              # System control server
-│   └── desktop/             # Desktop automation server
-├── config/                  # Configuration files
-│   ├── agent_config.yaml    # Agent settings
-│   └── mcp_servers.json     # MCP server configurations
-├── docs/                    # Documentation and references
-│   ├── mcp-reference.md     # MCP protocol documentation
-│   ├── ollama-setup.md      # Local LLM setup guide
-│   ├── architecture.md      # System architecture
-│   └── api-examples/        # Code examples and tutorials
-└── examples/                # Working examples
-    ├── basic_agent.py       # Simple agent implementation
-    ├── file_manager.py      # File management examples
-    └── automation_tasks.py  # Task automation examples
+├── README.md                           # This file
+├── simple_terminal_bridge.py           # Terminal chat bridge
+├── scripts/
+│   └── start_all_mcp_servers.sh       # MCP server startup script
+├── src/agent/ui/frontend/              # Electron app
+│   ├── main.js                        # Electron main process
+│   ├── preload.js                     # IPC bridge
+│   ├── src/
+│   │   ├── App.js                     # React floating UI
+│   │   └── hooks/useAgentWebSocket.js # WebSocket connection
+│   └── build/                         # Built React app
+├── mcp-servers/                        # MCP server implementations
+│   ├── desktop/                       # Desktop automation
+│   ├── filesystem/                    # File operations
+│   └── system/                        # System monitoring
+└── docs/                              # Documentation
 ```
 
-## Key Components
+## 🔧 Configuration
 
-### 1. Local Language Model
-- **Primary**: Llama 3.1 8B via Ollama
-- **Alternative**: Mistral 7B, CodeLlama 7B
-- **Interface**: Ollama REST API
+### MCP Server Ports
 
-### 2. MCP Servers
-- **File System**: Read/write files, directory operations, search
-- **System Control**: Execute commands, process management, monitoring
-- **Desktop Automation**: GUI interaction, screenshots, window management
+- **8765**: Filesystem server
+- **8766**: Desktop server  
+- **8767**: System server
+- **8090**: Terminal bridge WebSocket
 
-### 3. Agent Framework
-- **Core**: Python-based agent with function calling
-- **LLM Integration**: Ollama API client
-- **MCP Integration**: Custom MCP client implementation
-- **UI**: Command-line interface with optional web UI
+### Window Settings
 
-## Features
+Default floating window:
+- **Size**: 450x600 pixels (min: 350x400, max: 800x700)
+- **Position**: Right side of screen (70% from left, 50px from top)
+- **Transparency**: Yes, with backdrop blur
+- **Always on top**: Yes
 
-### File Management
-- Organize files by type, date, or custom criteria
-- Search files by content, metadata, or patterns
-- Automated backup and synchronization
-- Duplicate file detection and cleanup
+## 🐛 Troubleshooting
 
-### System Automation
-- Monitor system resources and performance
-- Automated software installation and updates
-- Process management and cleanup
-- Log analysis and reporting
+### Common Issues
 
-### Desktop Integration
-- Screenshot analysis and OCR
-- Window management and automation
-- Keyboard/mouse automation for repetitive tasks
-- Application launching and control
-
-## Installation
-
-1. **Install Ollama and download models**:
+1. **MCP Servers not starting**
    ```bash
-   curl -fsSL https://ollama.ai/install.sh | sh
-   ollama pull llama3.1:8b
+   # Check if ports are available
+   netstat -tulpn | grep -E "(8765|8766|8767)"
+   
+   # Kill conflicting processes
+   sudo fuser -k 8765/tcp 8766/tcp 8767/tcp
    ```
 
-2. **Set up Python environment**:
+2. **Electron window not showing**
    ```bash
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
+   # Check if Electron process is running
+   ps aux | grep electron
+   
+   # Try global shortcut
+   Ctrl+B  # Toggle window
    ```
 
-3. **Configure MCP servers**:
+3. **Screenshots not saving**
    ```bash
-   ./setup.sh
+   # Install gnome-screenshot
+   sudo apt install gnome-screenshot
+   
+   # Check desktop directory permissions
+   ls -la ~/Desktop
    ```
 
-4. **Run the agent**:
+4. **WebSocket connection failed**
    ```bash
-   python src/main.py
+   # Restart terminal bridge
+   pkill -f simple_terminal_bridge
+   python3 simple_terminal_bridge.py
    ```
 
-## Security Considerations
+### Debug Mode
 
-- **Sandboxing**: Limited file system access by default
-- **Permission System**: Explicit approval for sensitive operations
-- **Audit Logging**: All actions logged with timestamps
-- **Rate Limiting**: Prevents runaway automation
-- **Safe Mode**: Restricted operations for initial testing
+```bash
+# Enable Electron DevTools
+ELECTRON_IS_DEV=true npm run electron
 
-## Development Roadmap
+# Check React console errors
+# Press F12 in Electron window
+```
 
-### Phase 1: Core Infrastructure
-- [x] Project setup and documentation
-- [ ] Basic MCP client implementation
-- [ ] Ollama integration
-- [ ] Simple file operations
+## 🔒 Security
 
-### Phase 2: Agent Implementation
-- [ ] Core agent logic with function calling
-- [ ] Natural language command parsing
-- [ ] Error handling and recovery
-- [ ] Basic UI implementation
+The app includes:
+- Content Security Policy for Electron
+- Local-only connections (no external API calls)
+- File system access controls
+- Secure IPC communication
 
-### Phase 3: Advanced Features
-- [ ] Desktop automation capabilities
-- [ ] System monitoring and alerts
-- [ ] Task scheduling and automation
-- [ ] Web-based management interface
+## 📝 Recent Updates
 
-### Phase 4: Optimization
-- [ ] Performance tuning
-- [ ] Advanced security features
-- [ ] Plugin system for extensibility
-- [ ] Documentation and tutorials
+- ✅ Fixed TailwindCSS compilation issues
+- ✅ Implemented Cluely-inspired floating UI design
+- ✅ Added proper glass morphism effects
+- ✅ Fixed screenshot save location (Desktop/Pictures)
+- ✅ Disabled auto-opening DevTools
+- ✅ Added Content Security Policy
+- ✅ Improved terminal bridge responses
 
-## Contributing
+## 🤝 Contributing
 
-This is a personal project, but contributions and suggestions are welcome. Please see the documentation for development guidelines.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-## License
+## 📄 License
 
-MIT License - See LICENSE file for details.
+This project is licensed under the MIT License.

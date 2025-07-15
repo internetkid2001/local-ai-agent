@@ -51,12 +51,24 @@ function createWindow() {
     mainWindow.setAlwaysOnTop(true);
   }
 
-  // Load the app
-  const startUrl = isDev 
-    ? 'http://localhost:3000' 
-    : `file://${path.join(__dirname, 'build/index.html')}`;
+  // Load the app - force loading from build files for now
+  const buildPath = path.join(__dirname, 'build/index.html');
+  const startUrl = `file://${buildPath}`;
   
-  mainWindow.loadURL(startUrl);
+  console.log('Current directory:', __dirname);
+  console.log('Build path:', buildPath);
+  console.log('Loading URL:', startUrl);
+  
+  // Check if file exists
+  const fs = require('fs');
+  if (fs.existsSync(buildPath)) {
+    console.log('Build file exists, loading...');
+    mainWindow.loadURL(startUrl);
+  } else {
+    console.error('Build file does not exist at:', buildPath);
+    // Fallback to a simple HTML page
+    mainWindow.loadURL('data:text/html,<h1>Build file not found</h1><p>Path: ' + buildPath + '</p>');
+  }
 
   // Show window when ready
   mainWindow.once('ready-to-show', () => {
@@ -68,10 +80,10 @@ function createWindow() {
     windowPosition = { x: bounds.x, y: bounds.y };
     windowSize = { width: bounds.width, height: bounds.height };
     
-    // Open DevTools in development
-    if (isDev) {
-      mainWindow.webContents.openDevTools({ mode: 'detach' });
-    }
+    // Open DevTools in development (can be manually opened with F12)
+    // if (isDev) {
+    //   mainWindow.webContents.openDevTools({ mode: 'detach' });
+    // }
   });
 
   // Handle window events
@@ -446,6 +458,24 @@ ipcMain.handle('get-window-state', () => {
     position: windowPosition,
     size: windowSize
   };
+});
+
+ipcMain.handle('update-content-dimensions', (event, dimensions) => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const { width, height } = dimensions;
+    const bounds = mainWindow.getBounds();
+    
+    // Update window size while keeping position
+    mainWindow.setBounds({
+      x: bounds.x,
+      y: bounds.y,
+      width: Math.max(350, Math.min(width, 500)),
+      height: Math.max(400, Math.min(height, 700))
+    });
+    
+    // Update our stored size
+    windowSize = { width: width, height: height };
+  }
 });
 
 // Handle window close event properly
