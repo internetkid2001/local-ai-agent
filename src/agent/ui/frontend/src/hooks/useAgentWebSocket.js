@@ -31,6 +31,44 @@ export function useAgentWebSocket(url) {
       const data = JSON.parse(event.data);
       
       switch (data.type) {
+        case 'connection_status':
+          if (data.connected) {
+            setMessages((prev) => [...prev, { 
+              type: 'system', 
+              content: data.message || 'Connected to Local AI Agent',
+              timestamp: Date.now(),
+              id: Math.random().toString(36).substring(2, 15)
+            }]);
+            if (data.help) {
+              setMessages((prev) => [...prev, { 
+                type: 'system', 
+                content: data.help,
+                timestamp: Date.now(),
+                id: Math.random().toString(36).substring(2, 15)
+              }]);
+            }
+          }
+          break;
+          
+        case 'command_result':
+          setMessages((prev) => [...prev, { 
+            type: 'system', 
+            content: data.message,
+            timestamp: Date.now(),
+            id: Math.random().toString(36).substring(2, 15)
+          }]);
+          break;
+          
+        case 'ai_response':
+          setMessages((prev) => [...prev, { 
+            type: 'agent', 
+            content: data.message,
+            timestamp: Date.now(),
+            id: Math.random().toString(36).substring(2, 15),
+            role: data.role || 'assistant'
+          }]);
+          break;
+          
         case 'response':
           setMessages((prev) => [...prev, { 
             type: 'agent', 
@@ -160,23 +198,23 @@ export function useAgentWebSocket(url) {
 
     if (websocket.current && websocket.current.readyState === WebSocket.OPEN) {
       websocket.current.send(JSON.stringify({
-        type: 'chat',
-        content,
-        stream: options.stream !== false, // Default to streaming
-        mode: options.mode || 'automation', // 'chat', 'automation', 'analysis'
-        context: options.context || {},
-        mcp_enabled: options.mcp_enabled !== false // Default to MCP enabled
+        type: 'chat_message',
+        message: content,
+        history: messages.slice(-10).map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }))
       }));
     } else {
       setMessages((prev) => [...prev, { 
         type: 'system', 
-        content: 'Not connected to AI Agent.',
+        content: 'Not connected to MCP Chat Bridge.',
         timestamp: Date.now(),
         id: Math.random().toString(36).substring(2, 15),
         isError: true
       }]);
     }
-  }, []);
+  }, [messages]);
 
   const sendMCPCommand = useCallback((server, operation, params = {}) => {
     if (websocket.current && websocket.current.readyState === WebSocket.OPEN) {

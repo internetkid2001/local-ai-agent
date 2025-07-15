@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showWindow: () => ipcRenderer.invoke('show-window'),
   moveWindow: (direction) => ipcRenderer.invoke('move-window', direction),
   getWindowState: () => ipcRenderer.invoke('get-window-state'),
+  updateContentDimensions: (dimensions) => ipcRenderer.invoke('update-content-dimensions', dimensions),
   
   // Legacy support
   minimizeToTray: () => ipcRenderer.invoke('hide-window'),
@@ -30,7 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   invoke: (channel, data) => {
     const validChannels = [
       'get-app-version', 'get-platform', 'toggle-window', 
-      'hide-window', 'show-window', 'move-window', 'get-window-state'
+      'hide-window', 'show-window', 'move-window', 'get-window-state', 'update-content-dimensions'
     ];
     if (validChannels.includes(channel)) {
       return ipcRenderer.invoke(channel, data);
