@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Message, AgentStatus, MCPServers, WebSocketHook } from '../types/messages';
 
-export function useAgentWebSocket(url) {
-  const [connectionState, setConnectionState] = useState('Connecting');
-  const [messages, setMessages] = useState([]);
-  const [agentStatus, setAgentStatus] = useState({});
-  const [mcpServers, setMcpServers] = useState({});
-  const websocket = useRef(null);
+export function useAgentWebSocket(url: string): WebSocketHook {
+  const [connectionState, setConnectionState] = useState<string>('Connecting');
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [agentStatus, setAgentStatus] = useState<AgentStatus>({});
+  const [mcpServers, setMcpServers] = useState<MCPServers>({});
+  const websocket = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     websocket.current = new WebSocket(url);
@@ -15,7 +16,7 @@ export function useAgentWebSocket(url) {
       setConnectionState('Connected');
       
       // Request initial status
-      websocket.current.send(JSON.stringify({
+      websocket.current?.send(JSON.stringify({
         type: 'status_request'
       }));
       
@@ -181,14 +182,14 @@ export function useAgentWebSocket(url) {
     };
 
     return () => {
-      websocket.current.close();
+      websocket.current?.close();
     };
   }, [url]);
 
-  const sendMessage = useCallback((content, options = {}) => {
+  const sendMessage = useCallback((content: string, options: Record<string, any> = {}) => {
     if (!content.trim()) return;
 
-    const userMessage = { 
+    const userMessage: Message = { 
       type: 'user', 
       content,
       timestamp: Date.now(),
@@ -216,7 +217,7 @@ export function useAgentWebSocket(url) {
     }
   }, [messages]);
 
-  const sendMCPCommand = useCallback((server, operation, params = {}) => {
+  const sendMCPCommand = useCallback((server: string, operation: string, params: Record<string, any> = {}) => {
     if (websocket.current && websocket.current.readyState === WebSocket.OPEN) {
       websocket.current.send(JSON.stringify({
         type: 'mcp_command',

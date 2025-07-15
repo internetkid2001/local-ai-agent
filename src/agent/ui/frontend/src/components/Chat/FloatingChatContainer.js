@@ -156,16 +156,22 @@ export const FloatingChatContainer = ({
           <div className="p-2 border-t border-gray-700 flex justify-between items-center">
             <div className="flex space-x-2">
               <button 
-                onClick={() => onSendMessage('Take a screenshot')}
+                onClick={() => onSendMessage('/mcp desktop take_screenshot')}
                 className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-lg transition-colors"
               >
                 📸 Screenshot
               </button>
               <button 
-                onClick={() => onSendMessage('What can you see on my screen?')}
+                onClick={() => onSendMessage('/status')}
                 className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
               >
-                👁️ Analyze
+                📊 Status
+              </button>
+              <button 
+                onClick={() => onSendMessage('/help')}
+                className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
+              >
+                ❓ Help
               </button>
             </div>
             
