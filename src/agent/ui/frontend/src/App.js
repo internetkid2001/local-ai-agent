@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAgentWebSocket } from './hooks/useAgentWebSocket';
+import AIAssistant from './components/AIAssistant';
+import { ToastContainer } from './components/ui/Toast';
 
 function App() {
   const [isElectron, setIsElectron] = useState(false);
@@ -102,39 +104,11 @@ function App() {
       className="w-full h-full bg-black bg-opacity-90 backdrop-blur-lg border border-gray-600 rounded-2xl overflow-hidden shadow-2xl"
       style={{ minWidth: '350px', minHeight: '400px', maxWidth: '500px', maxHeight: '700px' }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800 bg-opacity-50">
-        <div className="flex items-center space-x-3">
-          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 animate-pulse"></div>
-          <span className="text-white font-medium text-sm">Local AI Agent</span>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          {/* Connection status */}
-          <div 
-            className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}
-            title={isConnected ? 'Connected' : 'Disconnected'}
-          ></div>
-          
-          {/* Minimize button */}
-          <button
-            onClick={() => setIsMinimized(!isMinimized)}
-            className="w-6 h-6 rounded-full bg-yellow-500 hover:bg-yellow-400 flex items-center justify-center text-black text-xs font-bold transition-colors"
-            title="Minimize"
-          >
-            −
-          </button>
-          
-          {/* Close button */}
-          <button
-            onClick={() => window.electronAPI?.hideWindow?.()}
-            className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center text-white text-xs font-bold transition-colors"
-            title="Hide (Ctrl+H)"
-          >
-            ×
-          </button>
-        </div>
-      </div>
+      {/* AI Assistant Component */}
+      <AIAssistant />
+
+      {/* Toast Notifications */}
+      <ToastContainer />
 
       {!isMinimized && (
         <>
