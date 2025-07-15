@@ -17,6 +17,7 @@ import aiohttp
 from typing import Dict, List, Any
 from model_selector import ModelSelector, ModelType
 from gemini_integration import GeminiIntegration
+from api_gateway import APIGateway, ResponseStatus
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -31,8 +32,7 @@ class TerminalBridge:
     def __init__(self):
         self.ollama_url = "http://localhost:11434"
         self.conversation_history = []
-        self.model_selector = ModelSelector()
-        self.gemini = GeminiIntegration()
+        self.api_gateway = APIGateway()
     
     async def chat_with_ollama(self, message: str) -> str:
         """Send message to Ollama for AI response"""
@@ -416,24 +416,28 @@ async def websocket_endpoint(websocket: WebSocket):
                         "message": command_result
                     }))
                 else:
-                    # Use model selector to choose the best model
-                    selected_model = bridge.model_selector.select_model(user_message)
+                    # Use API gateway for unified processing
+                    response = await bridge.api_gateway.process_message(
+                        user_message,
+                        context=bridge.conversation_history
+                    )
                     
-                    if selected_model == ModelType.GEMINI:
-                        ai_response = await bridge.gemini.chat(user_message)
-                        model_used = "Gemini"
-                    else:
-                        ai_response = await bridge.chat_with_ollama(user_message)
-                        model_used = "Ollama"
+                    # Add to conversation history
+                    bridge.conversation_history.append({"role": "user", "content": user_message})
+                    bridge.conversation_history.append({"role": "assistant", "content": response.message})
                     
-                    # Log model selection
-                    logger.info(f"Model selected: {selected_model.value} for message: {user_message[:50]}...")
+                    # Keep history manageable
+                    if len(bridge.conversation_history) > 20:
+                        bridge.conversation_history = bridge.conversation_history[-20:]
                     
+                    # Send response with additional metadata
                     await websocket.send_text(json.dumps({
                         "type": "ai_response",
-                        "message": ai_response,
+                        "message": response.message,
                         "role": "assistant",
-                        "model_used": model_used
+                        "model_used": response.model_used,
+                        "status": response.status.value,
+                        "processing_time": response.processing_time
                     }))
     
     except WebSocketDisconnect:

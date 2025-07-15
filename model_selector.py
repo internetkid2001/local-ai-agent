@@ -129,7 +129,7 @@ class ModelSelector:
     def select_model(self, 
                     message: str, 
                     context: Optional[List[Dict[str, str]]] = None,
-                    prefer_local: bool = True,
+                    prefer_local: bool = False,  # Changed default to prefer cloud models
                     require_internet: bool = True) -> ModelType:
         """
         Select the best model for the given message and context
