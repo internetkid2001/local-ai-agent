@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAgentWebSocket } from './hooks/useAgentWebSocket';
-import AIAssistant from './components/AIAssistant';
+import AIAssistantEnhanced from './components/AIAssistantEnhanced';
 import { ToastContainer } from './components/ui/Toast';
 import { GlassCard } from './components/ui/GlassCard';
 
@@ -242,7 +242,7 @@ function App() {
                 </div>
               </div>
             ) : (
-              <AIAssistant />
+              <AIAssistantEnhanced />
             )}
           </div>
         </>
