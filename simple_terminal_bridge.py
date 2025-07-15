@@ -45,11 +45,11 @@ class TerminalBridge:
                 "stream": False,
                 "options": {
                     "temperature": 0.7,
-                    "num_predict": 200,  # Reduced for faster responses
-                    "num_ctx": 2048,     # Smaller context for speed
-                    "num_batch": 512,    # Optimized batch size
+                    "num_predict": 50,  # Reduced for faster responses
+                    "num_ctx": 512,     # Smaller context for lower overhead
+                    "num_batch": 256,   # Adjusted batch size for compatibility
                     "num_gpu": 1,        # Use GPU if available
-                    "num_thread": 4,     # Optimize thread count
+                    "num_thread": 2,     # Lessen thread use for smaller model
                     "repeat_penalty": 1.1,
                     "top_k": 40,
                     "top_p": 0.9
@@ -89,10 +89,13 @@ class TerminalBridge:
             r'(show|get|tell me).*(system|computer|machine).*(info|information|details|specs)': '/mcp system get_system_info',
             r'^(system info|system information|computer info|machine info)': '/mcp system get_system_info',
             
-            # Process patterns
+            # Process patterns (also covers CPU usage)
             r'(show|list|get|see).*(process|running|tasks?)': '/mcp system get_processes',
             r'(what|which).*(process|running|tasks?)': '/mcp system get_processes',
             r'^(processes|running processes|tasks)': '/mcp system get_processes',
+            r'(cpu|processor).*(usage|load|utilization)': '/mcp system get_processes',
+            r'(show|get|check).*(cpu|processor)': '/mcp system get_processes',
+            r'^(cpu|processor|cpu usage|processor usage)': '/mcp system get_processes',
             
             # Memory patterns
             r'(memory|ram).*(usage|info|information|status)': '/mcp system get_memory_info',
@@ -112,7 +115,12 @@ class TerminalBridge:
             # File listing patterns
             r'(list|show|see).*(files?|directory|folder)': '/mcp filesystem list_files .',
             r'(what|which).*(files?|directory|folder)': '/mcp filesystem list_files .',
-            r'^(files|ls|dir)': '/mcp filesystem list_files .'
+            r'^(files|ls|dir)': '/mcp filesystem list_files .',
+            
+            # Network patterns (map to system info for now)
+            r'(network|net).*(info|information|status)': '/mcp system get_system_info',
+            r'(show|get|check).*(network|net)': '/mcp system get_system_info',
+            r'^(network|net|network info)': '/mcp system get_system_info'
         }
         
         # Try to match patterns
@@ -135,6 +143,18 @@ class TerminalBridge:
                 elif command == "/clear":
                     self.conversation_history = []
                     return "Conversation history cleared."
+                elif command == "/system_info":
+                    return self.get_system_info()
+                elif command == "/processes":
+                    return self.get_processes()
+                elif command == "/memory":
+                    return self.get_memory_info()
+                elif command == "/disk":
+                    return self.get_disk_usage()
+                elif command == "/screenshot":
+                    return self.take_screenshot()
+                elif command == "/files":
+                    return self.list_files(".")
                 elif command.startswith("/mcp"):
                     return self.handle_mcp_command(command)
                 else:
