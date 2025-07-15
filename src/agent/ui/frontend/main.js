@@ -14,11 +14,12 @@ function createWindow() {
   
   // Create the browser window with floating transparent design
   mainWindow = new BrowserWindow({
-    width: 450,
-    height: 600,
-    minWidth: 350,
-    minHeight: 400,
-    maxWidth: 800,
+    width: 420,
+    height: 200,
+    minWidth: 300,
+    minHeight: 120,
+    maxWidth: 600,
+    maxHeight: 500,
     x: Math.floor(workArea.width * 0.7), // Position on right side
     y: 50,
     webPreferences: {

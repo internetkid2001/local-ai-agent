@@ -49,40 +49,49 @@ what are my pc specs          # Get system information
 
 ### 🎨 Floating Desktop App (Electron)
 
-#### 1. Install Dependencies
+#### Quick Launch
+
+```bash
+# One-command launch (builds and starts everything)
+cd /home/vic/Documents/CODE/local-ai-agent
+./launch-floating-ui.sh
+```
+
+#### Manual Setup
 
 ```bash
 cd src/agent/ui/frontend
 
-# Install Node.js dependencies
+# Install dependencies
 npm install
-```
 
-#### 2. Build the React App
-
-```bash
-# Build production React app
+# Build React app
 npm run build
-```
 
-#### 3. Start the Floating Desktop App
-
-```bash
-# Launch Electron floating window
+# Launch Electron app
 npm run electron
 ```
 
 #### 4. Desktop App Features
 
-- **🎯 Floating Window**: Always-on-top transparent window
+- **🎯 Floating Widget**: Minimal, free-cluely inspired design
+- **🎮 Window Controls**:
+  - Green button: Toggle between compact/expanded sizes
+  - Yellow button: Minimize to tray
+  - Red button: Quit application
+  - Drag from top to move window
 - **⌨️ Global Shortcuts**:
   - `Ctrl+B`: Toggle window visibility
   - `Ctrl+H`: Hide window
   - `Ctrl+Arrow Keys`: Move window
   - `Ctrl+N`: New chat
-- **🎨 UI Design**: Cluely-inspired dark glass morphism
-- **📸 Screenshots**: Save to Desktop/Pictures folder
-- **🔌 MCP Integration**: Desktop automation capabilities
+- **🎨 UI Design**: Glass morphism with transparency and blur
+- **📸 Quick Actions**:
+  - Screenshot capture and analysis
+  - System information display
+  - MCP server status
+  - Natural language commands
+- **🔌 Full MCP Integration**: Desktop, System, Filesystem, AI Bridge
 
 ## 🛠️ Development
 
@@ -209,6 +218,13 @@ The app includes:
 
 ## 📝 Recent Updates
 
+- ✅ **July 15, 2025**: Major Floating UI Enhancements
+  - Transformed to minimal floating widget design
+  - Added window resize toggle (compact/expanded)
+  - Implemented formatted response display
+  - Enhanced MCP server integration
+  - Added quick action buttons
+  - See [FLOATING_UI_ENHANCEMENTS.md](FLOATING_UI_ENHANCEMENTS.md) for details
 - ✅ Fixed TailwindCSS compilation issues
 - ✅ Implemented Cluely-inspired floating UI design
 - ✅ Added proper glass morphism effects

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import GlassCard from './GlassCard';
-import { GlassButton } from './GlassCard';
+import { GlassButton } from './ui/GlassCard';
 
 /**
  * ScreenshotQueue Component
@@ -21,7 +20,7 @@ const ScreenshotQueue = ({ screenshots = [], onDelete }) => {
   return (
     <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {localScreenshots.map(({ path, preview }) => (
-        <GlassCard key={path} className="flex flex-col items-center">
+        <div key={path} className="glass-card flex flex-col items-center">
           <img
             src={preview}
             alt="Screenshot Preview"
@@ -30,7 +29,7 @@ const ScreenshotQueue = ({ screenshots = [], onDelete }) => {
           <GlassButton variant="danger" onClick={() => handleDelete(path)}>
             Delete
           </GlassButton>
-        </GlassCard>
+        </div>
       ))}
     </div>
   );

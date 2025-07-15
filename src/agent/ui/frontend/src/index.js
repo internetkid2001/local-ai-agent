@@ -2,12 +2,16 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import FloatingApp from './FloatingApp';
 import reportWebVitals from './reportWebVitals';
+
+// Check if running in Electron
+const isElectron = window.electronAPI !== undefined;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    {isElectron ? <FloatingApp /> : <App />}
   </React.StrictMode>
 );
 

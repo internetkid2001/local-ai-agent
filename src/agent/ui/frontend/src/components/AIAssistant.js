@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GlassCard, GlassButton, GlassBadge } from './ui/GlassCard';
-import ScreenshotQueue from './ui/ScreenshotQueue';
+import GlassCard, { GlassButton, GlassBadge } from './ui/GlassCard';
+import ScreenshotQueue from './ScreenshotQueue';
 import { showToast } from './ui/Toast';
 
 /**
@@ -182,6 +182,9 @@ const AIAssistant = () => {
             e.preventDefault();
             handleSolve();
             break;
+          default:
+            // Do nothing for other key combinations
+            break;
         }
       }
     };
@@ -193,7 +196,7 @@ const AIAssistant = () => {
   return (
     <div className="flex flex-col h-full bg-gray-900 text-white p-4 space-y-4">
       {/* Header */}
-      <GlassCard className="flex items-center justify-between">
+      <div className="glass-card flex items-center justify-between">
         <h1 className="text-2xl font-bold">AI Assistant</h1>
         <div className="flex items-center gap-2">
           <GlassBadge>
@@ -208,8 +211,8 @@ const AIAssistant = () => {
             <option value="local">Local (Ollama)</option>
             <option value="cloud">Cloud (Gemini)</option>
           </select>
-        </div>
-      </GlassCard>
+      </div>
+      </div>
 
       {/* Screenshot Queue */}
       <div className="flex-1 overflow-y-auto">
@@ -220,7 +223,7 @@ const AIAssistant = () => {
       </div>
 
       {/* Action Buttons */}
-      <GlassCard className="space-y-3">
+      <div className="glass-card space-y-3">
         {/* Screenshot Button */}
         <GlassButton 
           onClick={handleScreenshot}
@@ -263,13 +266,13 @@ const AIAssistant = () => {
             </>
           )}
         </GlassButton>
-      </GlassCard>
+      </div>
 
       {/* Status Bar */}
       {isProcessing && (
-        <GlassCard variant="secondary" className="text-center text-sm">
+        <div className="glass-card glass-card-secondary text-center text-sm">
           <span className="animate-pulse">AI is thinking...</span>
-        </GlassCard>
+        </div>
       )}
     </div>
   );
